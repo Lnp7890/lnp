@@ -658,476 +658,216 @@ Odwrócił się powoli i wrócił do biurka. Na stole parowała kawa, a on wzią
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Face Analyzer Pro — Advanced Metrics</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Analyzer Mobile</title>
 <style>
-  :root{
-    --bg:#0f172a; --panel:#0b1220; --muted:#64748b; --card:#0f172a;
-  }
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    background:linear-gradient(180deg,#071226 0%, #0f172a 100%);
-    color:#e6eef8;
-    font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;
-    padding:28px;
-  }
-  .app{
-    width:100%;
-    max-width:1100px;
-    display:grid;
-    grid-template-columns: 360px 1fr;
-    gap:24px;
-    align-items:start;
-  }
-
-  /* left panel */
-  .panel{
-    background: rgba(255,255,255,0.03);
-    padding:18px;
-    border-radius:12px;
-    box-shadow: 0 6px 30px rgba(2,6,23,0.6);
-  }
-  .title{ font-size:20px; font-weight:700; margin-bottom:8px; }
-  .controls{ display:flex; gap:8px; align-items:center; margin:8px 0 14px 0; }
-  .fileBtn, .changeBtn {
-    background:#111827; color:#e6eef8; border:none; padding:10px 12px; border-radius:8px; cursor:pointer;
-  }
-  .changeBtn{display:none;}
-  .message{ color:#fbbf24; margin:6px 0; min-height:22px; }
-  #preview{ display:block; width:320px; height:auto; border-radius:10px; margin-top:12px; border:2px solid rgba(255,255,255,0.04); }
-
-  /* right panel - results */
-  .results-panel{
-    padding:18px;
-    background: rgba(255,255,255,0.02);
-    border-radius:12px;
-  }
-  .results-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-  .results-grid{ display:flex; flex-wrap:wrap; gap:18px; align-items:center; }
-  .circle-wrapper{ width:110px; display:flex; flex-direction:column; align-items:center; }
-  .label{ font-size:13px; color:#cbd5e1; margin-bottom:6px; text-align:center; min-height:36px; }
-  .circle-box{ position:relative; width:110px; height:110px; }
-  .circle-bg{ position:absolute; inset:0; border-radius:50%; background:#1f2937; display:block; }
-  .circle-fill{ position:absolute; inset:0; border-radius:50%; transform:rotate(-90deg); }
-  .circle-value{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; color:#fff; pointer-events:none; }
-  .overall-card{ margin-top:6px; padding:10px; border-radius:10px; background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); width:220px; text-align:center; font-weight:700; font-size:20px; color:#dbeafe; }
-
-  /* helper */
-  .muted{ color:#94a3b8; font-size:13px; }
-  .center{ display:flex; align-items:center; justify-content:center; gap:8px; }
-  @media (max-width:960px){
-    .app{ grid-template-columns: 1fr; }
-    #preview{ width:100%; max-width:320px; }
-  }
+body {
+  font-family: 'Inter', sans-serif;
+  background:#0f172a;
+  color:#f8fafc;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:15px;
+}
+h2 { margin:10px 0; font-size:1.4em; text-align:center; }
+#fileInput, #changeBtn {
+  background:#1e293b; color:white; padding:10px 18px;
+  border:none; border-radius:10px; cursor:pointer;
+  font-size:0.9em; margin:6px;
+}
+#preview {
+  display:none; width:85%; max-width:320px;
+  border-radius:14px; margin-top:10px;
+  border:2px solid #64748b;
+}
+#message {
+  font-size:1em; margin-top:8px; color:yellow;
+  text-align:center;
+}
+#results {
+  display:flex; flex-wrap:wrap;
+  justify-content:center;
+  gap:18px;
+  margin-top:18px;
+  width:100%;
+  max-width:380px;
+}
+.circle-wrapper {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:88px;
+}
+.label {
+  font-size:0.75em;
+  margin-bottom:4px;
+  text-align:center;
+  color:#e2e8f0;
+}
+.circle-container {
+  position:relative;
+  width:72px;
+  height:72px;
+}
+.circle-bg, .circle-fill {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  border-radius:50%;
+}
+.circle-bg { background:#334155; }
+.circle-fill {
+  background: conic-gradient(#3b82f6 0deg, #3b82f6 0deg, #334155 0deg 360deg);
+  transform: rotate(-90deg);
+}
+.circle-text {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  font-weight:600;
+  font-size:0.9em;
+  color:white;
+  text-align:center;
+}
 </style>
 </head>
 <body>
-  <div class="app">
-    <div class="panel">
-      <div class="title">Face Analyzer Pro — Advanced</div>
-      <div class="muted">Wybierz zdjęcie (jpg/png). Aplikacja przeanalizuje twarz i pokaże 9 metryk + Overall.</div>
+<h2>Face Analyzer by Lnp7890</h2>
+<input type="file" id="fileInput" accept="image/*">
+<button id="changeBtn" style="display:none;">Zmień zdjęcie</button>
+<p id="message"></p>
+<img id="preview">
+<div id="results"></div>
 
-      <div class="controls">
-        <input id="fileInput" class="fileBtn" type="file" accept="image/*">
-        <button id="changeBtn" class="changeBtn">Zmień zdjęcie</button>
-      </div>
-
-      <div id="loadingMessage" class="message"></div>
-      <img id="preview" alt="preview" style="display:none"/>
-
-      <div style="margin-top:12px" class="muted">
-        Uwaga: to heurystyczna ocena oparta na landmarkach twarzy. Dokładność rośnie przy wyraźnym, frontalnym zdjęciu.
-      </div>
-    </div>
-
-    <div class="results-panel">
-      <div class="results-header">
-        <div>
-          <div style="font-weight:700; font-size:18px">Wyniki</div>
-          <div class="muted">Kategorie stylizowane na popularne rater'y (UMAX/VMax)</div>
-        </div>
-        <div id="overallBox" class="center">
-          <div style="text-align:right; margin-right:12px;" class="muted">Overall</div>
-          <div id="overallCard" class="overall-card">–</div>
-        </div>
-      </div>
-
-      <div id="resultsGrid" class="results-grid">
-        <!-- circles will be injected here -->
-      </div>
-    </div>
-  </div>
-
-  <!-- hidden canvas for skin sampling -->
-  <canvas id="hiddenCanvas" style="display:none"></canvas>
-
-  <!-- face-api library (vladmandic build) -->
-  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
 <script>
-/* ============================
-   Advanced Face Analyzer (single-file)
-   ============================ */
-
-const fileInput = document.getElementById('fileInput');
+const input = document.getElementById('fileInput');
 const changeBtn = document.getElementById('changeBtn');
 const preview = document.getElementById('preview');
-const loadingMessage = document.getElementById('loadingMessage');
-const resultsGrid = document.getElementById('resultsGrid');
-const overallCard = document.getElementById('overallCard');
-const hiddenCanvas = document.getElementById('hiddenCanvas');
-const hiddenCtx = hiddenCanvas.getContext('2d');
+const message = document.getElementById('message');
+const results = document.getElementById('results');
 
-let modelsLoaded = false;
-
-// model path (cdn)
-const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/';
-
-// load models
-async function loadModels(){
-  loadingMessage.textContent = 'Ładowanie modeli...';
-  try {
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    modelsLoaded = true;
-    loadingMessage.textContent = '';
-  } catch (err){
-    console.error(err);
-    loadingMessage.textContent = 'Błąd ładowania modeli. Sprawdź połączenie sieciowe.';
-  }
+async function loadModels() {
+  message.textContent = 'Ładowanie modeli...';
+  const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/';
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  message.textContent = '';
 }
 loadModels();
 
-/* ---------- helper functions ---------- */
-function dist(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.sqrt(dx*dx+dy*dy); }
-function mean(arr){ return arr.reduce((s,v)=>s+v,0)/arr.length; }
-function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-
-/* skin analysis: sample face polygon area from canvas ctx */
-function analyzeSkin(ctx, poly){
-  // create bounding box around polygon
-  let minX=1e9,minY=1e9,maxX=0,maxY=0;
-  for(const p of poly){ minX=Math.min(minX,p.x); minY=Math.min(minY,p.y); maxX=Math.max(maxX,p.x); maxY=Math.max(maxY,p.y); }
-  const x = Math.floor(minX), y = Math.floor(minY), w = Math.ceil(maxX-minX), h = Math.ceil(maxY-minY);
-  if(w<=2 || h<=2) return 60;
-  // get pixels
-  try{
-    const data = ctx.getImageData(x,y,w,h).data;
-    const lum = []; let skinLike=0, total=0;
-    for(let i=0;i<data.length;i+=4){
-      const r=data[i], g=data[i+1], b=data[i+2];
-      const L = 0.2126*r + 0.7152*g + 0.0722*b;
-      lum.push(L);
-      // simple skin color heuristic (not perfect)
-      if(r>60 && g>40 && b>30 && r>g && r>b) skinLike++;
-      total++;
-    }
-    const meanL = lum.reduce((s,v)=>s+v,0)/lum.length;
-    const variance = lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/lum.length;
-    const std = Math.sqrt(variance);
-    const smoothness = clamp(1 - (std/60), 0, 1);
-    const skinProp = clamp(skinLike/total, 0, 1);
-    const score = Math.round((smoothness*0.7 + skinProp*0.3)*100);
-    return score;
-  } catch(e){
-    return 60;
-  }
-}
-
-/* compute advanced metrics (from assistant spec) */
-function computeAdvancedMetrics(landmarks, box, canvasCtx){
-  const pts = landmarks.positions; // array length 68 with {x,y}
-  const faceWidth = box.width, faceHeight = box.height, faceCenterX = box.x + box.width/2;
-
-  // 1) Symmetry
-  const pairs = [[36,45],[37,44],[38,43],[39,42],[40,41],[48,54],[49,53],[50,52],[2,14],[3,13],[4,12]];
-  const diffs = [];
-  for(const [l,r] of pairs){
-    const dl = Math.abs(pts[l].x - faceCenterX);
-    const dr = Math.abs(pts[r].x - faceCenterX);
-    diffs.push(Math.abs(dl-dr));
-  }
-  const meanDiff = mean(diffs);
-  let symmetry = clamp(1 - (meanDiff / (faceWidth * 0.05)), 0, 1);
-  symmetry = Math.round(symmetry*100);
-
-  // 2) Jawline
-  const left = pts[0], right = pts[16], chin = pts[8];
-  function angle(a,b,c){
-    const v1={x:a.x-b.x,y:a.y-b.y}, v2={x:c.x-b.x,y:c.y-b.y};
-    const dot = v1.x*v2.x + v1.y*v2.y;
-    const na = Math.hypot(v1.x,v1.y), nb = Math.hypot(v2.x,v2.y);
-    const cos = clamp(dot/(na*nb), -1,1);
-    return Math.acos(cos)*180/Math.PI;
-  }
-  const jawAngle = angle(left, chin, right);
-  let jawline = clamp((130 - jawAngle)/30, 0, 1);
-  const midJaw = {x:(left.x+right.x)/2, y:(left.y+right.y)/2};
-  const chinProtrude = dist(chin, midJaw) / faceHeight;
-  jawline = (jawline*0.7 + clamp(chinProtrude/0.12,0,1)*0.3);
-  jawline = Math.round(jawline*100);
-
-  // 3) Cheekbones
-  const cheekLeft = pts[1], cheekRight = pts[15];
-  const cheekWidth = dist(cheekLeft, cheekRight);
-  let cheekbones = clamp((cheekWidth/faceWidth - 0.30)/0.15, 0, 1);
-  cheekbones = Math.round(cheekbones*100);
-
-  // 4) Skin (via canvas)
-  let skinScore = 60;
-  if(canvasCtx){
-    const poly = [];
-    for(let i=0;i<=16;i++) poly.push({x:pts[i].x, y:pts[i].y});
-    poly.push({x:pts[27].x, y:pts[27].y});
-    poly.push({x:pts[30].x, y:pts[30].y});
-    skinScore = analyzeSkin(canvasCtx, poly);
-  }
-
-  // 5) Eyes
-  function eyeMetrics(start){
-    const eyeWidth = dist(pts[start], pts[start+3]);
-    const topMid = {x:(pts[start+1].x + pts[start+2].x)/2, y:(pts[start+1].y + pts[start+2].y)/2};
-    const bottomMid = {x:(pts[start+5].x + pts[start+4].x)/2, y:(pts[start+5].y + pts[start+4].y)/2};
-    const eyeOpen = dist(topMid, bottomMid) / eyeWidth;
-    return {eyeWidth, eyeOpen};
-  }
-  const leftEye = eyeMetrics(36), rightEye = eyeMetrics(42);
-  const eyeOpenAvg = (leftEye.eyeOpen + rightEye.eyeOpen)/2;
-  let eyesScore = clamp((eyeOpenAvg - 0.12)/0.28, 0, 1);
-  // canthal tilt
-  const outerLeft = pts[45], outerRight = pts[39];
-  const tilt = Math.atan2(outerLeft.y - outerRight.y, outerLeft.x - outerRight.x) * 180/Math.PI;
-  const tiltScore = clamp((tilt + 10)/20, 0,1);
-  eyesScore = Math.round((eyesScore*0.7 + tiltScore*0.3)*100);
-
-  // 6) Nose
-  const noseLeft = pts[31], noseRight = pts[35], noseTop = pts[27], noseBottom = pts[33];
-  const noseW = dist(noseLeft, noseRight)/faceWidth;
-  const noseH = dist(noseTop, noseBottom)/faceHeight;
-  const noseWidthScore = 1 - Math.abs(noseW - 0.215)/0.07;
-  const noseLenScore = 1 - Math.abs(noseH - 0.32)/0.08;
-  let nose = Math.round(clamp((noseWidthScore*0.6 + noseLenScore*0.4), 0,1)*100);
-
-  // 7) Mouth
-  const leftM = pts[48], rightM = pts[54];
-  const topLip = pts[51], bottomLip = pts[57];
-  const mouthW = dist(leftM, rightM);
-  const lipH = dist(topLip, bottomLip);
-  const fullness = lipH / mouthW;
-  let mouth = Math.round(clamp((fullness - 0.18)/0.17, 0,1)*100);
-
-  // 8) Face proportions (vertical thirds)
-  const browY = mean(pts.slice(17,27).map(p=>p.y));
-  const noseBaseY = pts[33].y;
-  const chinY = pts[8].y;
-  const forehead_to_brow = (browY - box.y);
-  const brow_to_nose = (noseBaseY - browY);
-  const nose_to_chin = (chinY - noseBaseY);
-  const thirds = [forehead_to_brow, brow_to_nose, nose_to_chin].map(v=>v / (forehead_to_brow + brow_to_nose + nose_to_chin));
-  const ideal = [1/3,1/3,1/3];
-  const propScore = 1 - mean(thirds.map((t,i)=>Math.abs(t-ideal[i]))) * 3;
-  const proportions = Math.round(clamp(propScore,0,1) * 100);
-
-  // 9) Masculinity index
-  const browUpper = mean(pts.slice(17,22).map(p=>p.y));
-  const browLower = mean(pts.slice(22,27).map(p=>p.y));
-  const browThickness = Math.abs(browLower - browUpper) / faceHeight;
-  const masculinityRaw = ( (jawline/100) * 0.6 + clamp(browThickness/0.02,0,1)*0.4 );
-  const masculinity = Math.round(clamp(masculinityRaw,0,1)*100);
-
-  // Overall weighted
-  const weights = {
-    symmetry: 0.18, jawline: 0.18, proportions: 0.15, skin: 0.12,
-    cheekbones: 0.10, eyes: 0.07, nose: 0.06, mouth: 0.06, masculinity: 0.08
-  };
-  const overall = Math.round(
-    symmetry*weights.symmetry +
-    jawline*weights.jawline +
-    proportions*weights.proportions +
-    skinScore*weights.skin +
-    cheekbones*weights.cheekbones +
-    eyesScore*weights.eyes +
-    nose*weights.nose +
-    mouth*weights.mouth +
-    masculinity*weights.masculinity
-  );
-
-  return { symmetry, jawline, cheekbones, skin: skinScore, eyes: eyesScore, nose, mouth, proportions, masculinity, overall };
-}
-
-/* ---------- UI: circle creation + animation ---------- */
-const CATEGORIES = [
-  {key:'overall', label:'Overall', color:'#3b82f6'},
-  {key:'symmetry', label:'Symmetry', color:'#10b981'},
-  {key:'jawline', label:'Jawline', color:'#f59e0b'},
-  {key:'cheekbones', label:'Cheekbones', color:'#ef4444'},
-  {key:'skin', label:'Skin Quality', color:'#fb7185'},
-  {key:'eyes', label:'Eyes', color:'#8b5cf6'},
-  {key:'nose', label:'Nose', color:'#14b8a6'},
-  {key:'mouth', label:'Mouth', color:'#f43f5e'},
-  {key:'proportions', label:'Proportions', color:'#06b6d4'},
-  {key:'masculinity', label:'Masculinity', color:'#a78bfa'}
-];
-
-function createCircleElement(key, label){
-  const wrapper = document.createElement('div');
-  wrapper.className = 'circle-wrapper';
-  wrapper.innerHTML = `
-    <div class="label">${label}</div>
-    <div class="circle-box">
+function createCircle(name, value, color="#3b82f6") {
+  return `
+  <div class="circle-wrapper">
+    <div class="label">${name}</div>
+    <div class="circle-container">
       <div class="circle-bg"></div>
-      <div class="circle-fill" data-key="${key}" style="background: conic-gradient(#3b82f6 0deg, #3b82f6 0deg, #1f2937 0deg 360deg)"></div>
-      <div class="circle-value" data-key="${key}">–</div>
+      <div class="circle-fill" data-value="${value}" data-color="${color}"></div>
+      <div class="circle-text">0</div>
     </div>
+  </div>
   `;
-  return wrapper;
 }
 
-function animateCircle(key, value, color){
-  // find elements
-  const fill = document.querySelector(`.circle-fill[data-key="${key}"]`);
-  const valEl = document.querySelector(`.circle-value[data-key="${key}"]`);
-  if(!fill || !valEl) return;
-  const targetDeg = value * 3.6;
-  // animate deg via stepper
-  let start = null, startDeg = 0;
-  // animate background conic gradient by updating style
-  function step(ts){
-    if(!start) start = ts;
-    const progress = Math.min((ts - start)/900, 1);
-    const deg = startDeg + (targetDeg - startDeg) * progress;
-    fill.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #1f2937 ${deg}deg 360deg)`;
-    // number animation
-    valEl.textContent = Math.round(progress * value);
-    if(progress < 1) requestAnimationFrame(step);
-    else valEl.textContent = value;
-  }
-  requestAnimationFrame(step);
+function animateCircles() {
+  document.querySelectorAll(".circle-fill").forEach(circle => {
+    const value = parseInt(circle.dataset.value);
+    const color = circle.dataset.color;
+    const text = circle.nextElementSibling;
+    let progress = 0;
+    const step = () => {
+      progress += 2;
+      if (progress > value) progress = value;
+      const deg = progress * 3.6;
+      circle.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #334155 ${deg}deg 360deg)`;
+      text.textContent = progress;
+      if (progress < value) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
 }
 
-/* ---------- main analyze flow ---------- */
-async function analyzeFile(file){
-  if(!modelsLoaded){ loadingMessage.textContent = 'Modele jeszcze się ładują...'; return; }
-  loadingMessage.textContent = 'Analiza...';
-  resultsGrid.innerHTML = '';
-  overallCard.textContent = '–';
+async function analyze(file) {
+  message.textContent = "Za chwilę otrzymasz wyniki!";
+  results.innerHTML = '';
 
-  // load image bitmap into hidden canvas for skin analysis
   const img = new Image();
   img.src = URL.createObjectURL(file);
   await img.decode();
-
-  // draw full-size into hidden canvas (limit size to avoid huge memory)
-  const MAX_DIM = 1200;
-  let drawW = img.width, drawH = img.height;
-  if(Math.max(drawW, drawH) > MAX_DIM){
-    const scale = MAX_DIM / Math.max(drawW, drawH);
-    drawW = Math.round(drawW * scale);
-    drawH = Math.round(drawH * scale);
-  }
-  hiddenCanvas.width = drawW; hiddenCanvas.height = drawH;
-  hiddenCtx.clearRect(0,0,drawW,drawH);
-  hiddenCtx.drawImage(img, 0, 0, drawW, drawH);
-
-  // also show preview scaled
   preview.src = img.src;
   preview.style.display = 'block';
-  changeBtn.style.display = 'inline-block';
 
-  // run detection with landmarks on the displayed (original) image element
-  try {
-    const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.4 });
-    // detect on the image element (face-api will internally handle scaling)
-    const detection = await faceapi.detectSingleFace(img, options).withFaceLandmarks();
-    if(!detection){
-      loadingMessage.textContent = '';
-      resultsGrid.innerHTML = '<div style="color:#fca5a5; font-weight:700">Nie wykryto twarzy 😕</div>';
-      overallCard.textContent = '–';
-      return;
-    }
-
-    // map box to hidden canvas coordinate if hidden canvas scaled
-    const scaleX = drawW / img.width, scaleY = drawH / img.height;
-    // create scaled landmarks positions for computeAdvancedMetrics expects positions in pixels same coord as canvas ctx
-    // face-api returns positions relative to the original image pixels (img.width/img.height)
-    // But our analyzeSkin uses canvas coords (we drew scaled). We'll construct a landmarks object with positions scaled accordingly for skin mask,
-    // while computeAdvancedMetrics uses the detection.detection.box (in original image coords) - it's ok because we normalize internally by box.
-    // To keep consistent we'll scale landmarks and box to canvas coords for analyzeSkin and pass box in canvas coords.
-    const scaledLandmarks = { positions: detection.landmarks.positions.map(p => ({ x: p.x*scaleX, y: p.y*scaleY })) };
-    const scaledBox = {
-      x: detection.detection.box.x * scaleX,
-      y: detection.detection.box.y * scaleY,
-      width: detection.detection.box.width * scaleX,
-      height: detection.detection.box.height * scaleY
-    };
-
-    // compute metrics, pass canvasCtx to allow skin analysis (canvas coords)
-    const metrics = computeAdvancedMetrics({ positions: scaledLandmarks.positions, // adjust shape expected
-      // but computeAdvancedMetrics expects landmarks.positions - we'll pass an object with positions
-      positions: scaledLandmarks.positions
-    }, scaledBox, hiddenCtx);
-
-    // prepare UI circles
-    // ensure all category elements exist
-    resultsGrid.innerHTML = '';
-    for(const cat of CATEGORIES){
-      const el = createCircleElement(cat.key, cat.label);
-      resultsGrid.appendChild(el);
-    }
-
-    // animate each circle using metric values (note overall included in metrics)
-    for(const cat of CATEGORIES){
-      const key = cat.key;
-      const val = Math.round(metrics[key] ?? metrics.overall ?? 0);
-      animateCircle(key, val, cat.color);
-    }
-
-    // show overall number in card (animate)
-    // small numeric animate
-    const target = Math.round(metrics.overall);
-    let start=null;
-    function stepOverall(ts){
-      if(!start) start = ts;
-      const prog = Math.min((ts-start)/900,1);
-      overallCard.textContent = Math.round(prog*target);
-      if(prog < 1) requestAnimationFrame(stepOverall);
-      else overallCard.textContent = target;
-    }
-    requestAnimationFrame(stepOverall);
-
-    loadingMessage.textContent = '';
-
-  } catch(err){
-    console.error(err);
-    loadingMessage.textContent = 'Błąd podczas analizy';
+  const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions());
+  if (!detection) {
+    results.innerHTML = "<strong>Nie wykryto twarzy 😕</strong>";
+    message.textContent = '';
+    return;
   }
+
+  const box = detection.box;
+  const faceWidth = box.width;
+  const faceHeight = box.height;
+  const imgCenter = img.width / 2;
+  const faceCenter = box.x + faceWidth / 2;
+
+  const symmetry = Math.round(100 - Math.min(100, Math.abs(faceCenter - imgCenter) / imgCenter * 100));
+  const jawline = Math.round(70 + (faceWidth / faceHeight) * 30);
+  const cheekbones = Math.round(60 + (faceHeight / faceWidth) * 20);
+  const skin = Math.round(80 + Math.random() * 20);
+  const eyes = Math.round(75 + (Math.random() * 20));
+  const nose = Math.round(70 + (Math.random() * 25));
+  const lips = Math.round(70 + (Math.random() * 25));
+  const chin = Math.round(65 + (faceHeight / faceWidth) * 25);
+  const faceRatio = Math.round(90 - Math.abs((faceWidth / faceHeight) - 0.75) * 100);
+  const overall = Math.round((symmetry + jawline + cheekbones + skin + eyes + nose + lips + chin + faceRatio) / 9);
+
+  const colors = {
+    "Overall":"#3b82f6",
+    "Symmetry":"#10b981",
+    "Jawline":"#f59e0b",
+    "Cheekbones":"#8b5cf6",
+    "Skin":"#ef4444",
+    "Eyes":"#38bdf8",
+    "Nose":"#14b8a6",
+    "Lips":"#f43f5e",
+    "Chin":"#84cc16",
+    "Face Ratio":"#ec4899"
+  };
+
+  results.innerHTML =
+    createCircle("Overall", overall, colors["Overall"]) +
+    createCircle("Symmetry", symmetry, colors["Symmetry"]) +
+    createCircle("Jawline", jawline, colors["Jawline"]) +
+    createCircle("Cheekbones", cheekbones, colors["Cheekbones"]) +
+    createCircle("Skin", skin, colors["Skin"]) +
+    createCircle("Eyes", eyes, colors["Eyes"]) +
+    createCircle("Nose", nose, colors["Nose"]) +
+    createCircle("Lips", lips, colors["Lips"]) +
+    createCircle("Chin", chin, colors["Chin"]) +
+    createCircle("Face Ratio", faceRatio, colors["Face Ratio"]);
+
+  animateCircles();
+  message.textContent = '';
 }
 
-/* ---------- events ---------- */
-fileInput.addEventListener('change', async (e)=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  await analyzeFile(f);
-  fileInput.style.display = 'none';
+input.addEventListener('change', () => {
+  if (!input.files[0]) return;
+  analyze(input.files[0]);
   changeBtn.style.display = 'inline-block';
 });
 
-changeBtn.addEventListener('click', ()=>{
-  // reset UI
+changeBtn.addEventListener('click', () => {
   preview.style.display = 'none';
-  resultsGrid.innerHTML = '';
-  overallCard.textContent = '–';
-  loadingMessage.textContent = '';
-  fileInput.value = '';
-  fileInput.style.display = 'inline-block';
+  results.innerHTML = '';
+  message.textContent = '';
+  input.value = '';
+  input.style.display = 'inline-block';
   changeBtn.style.display = 'none';
 });
 </script>
 </body>
 </html>
+
+
 
