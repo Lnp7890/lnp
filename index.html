@@ -660,828 +660,731 @@ Odwrócił się powoli i wrócił do biurka. Na stole parowała kawa, a on wzią
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Face Analyzer — Hybrid (online + offline fallback)</title>
-
-<!-- Attempt to load TF & face-landmarks if online; if not, fallback uses built-in heuristics -->
-<!-- We still include safe small libs (none heavy) — model load attempted dynamically -->
-
+<title>Face Analyzer — Real FaceMesh (3-methods)</title>
 <style>
 :root{
-  --bg:#100507;
-  --panel:#16080a;
-  --accent:#ff4b2b;
-  --accent-2:#ffb38a;
-  --muted:#e7d6d2;
-  --card-radius:12px;
+  --bg:#0a0303;
+  --card:#180606;
+  --accent1:#ff3b2f;
+  --accent2:#ff8a6b;
+  --muted:#d6c6c3;
+  --radius:14px;
 }
 *{box-sizing:border-box}
-body{ margin:0; font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,var(--bg),#0b0606); color:#fff; display:flex; justify-content:center; padding:18px;}
-.container{ width:100%; max-width:980px; }
-.card{ background:rgba(255,255,255,0.02); padding:14px; border-radius:12px; box-shadow:0 12px 50px rgba(0,0,0,0.6); }
-.header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
-.title{ font-weight:800; color:var(--accent); font-size:18px; margin:0; }
-.subtitle{ color:var(--muted); font-size:13px; }
-
-.layout{ display:grid; grid-template-columns:1fr 320px; gap:14px; align-items:start; }
-@media (max-width:880px){ .layout{ grid-template-columns:1fr; } }
-
-.preview{ background:linear-gradient(180deg,#220a07,#150607); border-radius:12px; min-height:260px; display:flex; align-items:center; justify-content:center; padding:10px; }
-#previewImg{ max-width:100%; max-height:460px; display:none; border-radius:10px; object-fit:contain; box-shadow:0 8px 30px rgba(0,0,0,0.6); }
-.hint{ color:var(--muted); text-align:center; padding:8px; }
-
-.side{ display:flex; flex-direction:column; gap:8px; }
-.file-btn{ padding:12px 14px; border-radius:10px; border:1px dashed rgba(255,255,255,0.06); color:var(--muted); text-align:center; cursor:pointer; background:transparent; }
-.btn{ padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#200503; }
-.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.05); color:var(--muted); }
-
-.progress{ height:10px; width:100%; background:rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; }
-.progress > i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width 300ms ease; }
-
-.results-grid{ margin-top:12px; display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; }
-.result{ background:rgba(255,255,255,0.01); padding:10px; border-radius:10px; display:flex; flex-direction:column; align-items:center; gap:8px; min-height:110px; }
-.label{ color:var(--muted); font-size:13px; text-align:center; width:100%; }
-.circle{ width:86px; height:86px; border-radius:50%; background:#0b0708; display:flex; align-items:center; justify-content:center; position:relative; }
-.value{ font-weight:800; font-size:18px; color:#fff; }
-
-.footer{ margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; color:var(--muted); font-size:13px;}
-.small{ font-size:12px; color:var(--muted); }
+body{margin:0; font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,#0a0303,#040101); color:#fff; padding:18px; display:flex; justify-content:center;}
+.wrapper{width:100%; max-width:980px;}
+.card{background:rgba(255,255,255,0.02); border-radius:var(--radius); padding:14px; box-shadow:0 18px 60px rgba(0,0,0,0.6);}
+.header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;}
+.title{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; color:transparent;}
+.subtitle{color:var(--muted); font-size:13px;}
+.stack{display:flex; flex-direction:column; gap:12px;}
+.preview{background:linear-gradient(180deg,#220606,#120303); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:10px;}
+#previewImg{max-width:100%; border-radius:10px; object-fit:contain; display:none; box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+.controls{display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap;}
+.file-btn{padding:10px 12px; border-radius:10px; border:1px dashed rgba(255,255,255,0.06); color:var(--muted); background:transparent; cursor:pointer;}
+.btn{padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; color:#200503; background:linear-gradient(90deg,var(--accent2),var(--accent1));}
+.small{font-size:12px; color:var(--muted);}
+.progress{height:10px; width:100%; background:rgba(255,255,255,0.02); border-radius:999px; overflow:hidden;}
+.progress > i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent2)); transition:width 400ms ease;}
+.results{display:flex; flex-direction:column; gap:12px; width:100%;}
+.results-grid{display:grid; grid-template-columns: 1fr; gap:8px;} /* vertical stacked cards */
+.result-row{display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.01); padding:10px; border-radius:10px;}
+.ring{width:84px; height:84px; border-radius:50%; background:#0d0706; display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 8px 30px rgba(0,0,0,0.45);}
+.value{font-weight:900; font-size:18px; color:#fff;}
+.label{font-size:14px; color:var(--muted); font-weight:700;}
+.meta{font-size:12px; color:var(--muted);}
+@media (max-width:700px){
+  .result-row{flex-direction:row; gap:8px;}
+  .ring{width:68px; height:68px;}
+  .value{font-size:16px;}
+}
 </style>
 </head>
 <body>
-  <div class="container" id="face-analyzer-root">
-    <div class="card" id="faCard">
+  <div class="wrapper" id="fa-wrapper">
+    <div class="card" id="fa-card">
       <div class="header">
         <div>
-          <h1 class="title">Face Analyzer — Hybrid</h1>
-          <div class="subtitle" id="modeHint">Próba: online → jeśli brak internetu, użyję trybu offline</div>
+          <div class="title">Face Analyzer — by Lnp7890</div>
+          <div class="subtitle">Dokładna analiza 3-metodowa • 7 typów oczu • 7 kształtów twarzy</div>
         </div>
-        <div id="status" class="subtitle">Inicjalizacja...</div>
+        <div id="statusText" class="subtitle">Inicjalizacja modeli...</div>
       </div>
 
-      <div class="layout">
-        <div class="preview">
-          <img id="previewImg" alt="Podgląd zdjęcia">
-          <div id="previewHint" class="hint">Wybierz zdjęcie (jpg/png/webp). Analiza uruchomi się automatycznie.</div>
+      <div class="stack">
+        <div class="preview" id="previewPanel">
+          <img id="previewImg" alt="Podgląd zdjęcia"/>
+          <div id="hint" class="small">Wybierz zdjęcie JPG/PNG/WebP — analiza rozpocznie się automatycznie</div>
+
+          <div class="controls" style="width:100%; justify-content:flex-start;">
+            <label class="file-btn" id="uploadLabel">Wybierz zdjęcie
+              <input id="fileInput" type="file" accept="image/*" style="display:none">
+            </label>
+            <button id="changeBtn" class="btn" style="display:none">Zmień zdjęcie</button>
+            <div style="flex:1">
+              <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-bottom:6px;">
+                <div>Ładowanie modeli</div><div id="countdown">20s</div>
+              </div>
+              <div class="progress"><i id="progressFill"></i></div>
+            </div>
+          </div>
         </div>
 
-        <div class="side">
-          <label class="file-btn" id="uploadLabel">📁 Wybierz zdjęcie
-            <input id="fileInput" type="file" accept="image/*" style="display:none">
-          </label>
-          <div style="display:flex; gap:8px;">
-            <button id="changeBtn" class="ghost" style="display:none">Zmień zdjęcie</button>
-            <button id="resetBtn" class="ghost">Reset</button>
-          </div>
-
-          <div class="small">Model load progress</div>
-          <div class="progress"><i id="progFill"></i></div>
-          <div class="small" id="countdown">Odliczanie: 20s</div>
-
-          <div style="display:flex; gap:8px; margin-top:6px;">
-            <button id="analyzeBtn" class="btn" disabled>Analizuj ręcznie</button>
-            <button id="downloadBtn" class="ghost" disabled>Pobierz JSON</button>
-          </div>
-
-          <div class="small" id="infoLine" style="margin-top:6px;">Tryb hybrydowy: online → offline fallback (działa bez internetu).</div>
+        <div class="results" id="resultsSection">
+          <div class="meta small" id="modeNote">Tryb: oczekiwanie na modele...</div>
+          <div id="resultsGrid" class="results-grid" role="region" aria-live="polite"></div>
         </div>
-      </div>
 
-      <div id="resultsGrid" class="results-grid" aria-live="polite" style="margin-top:12px;"></div>
-
-      <div class="footer">
-        <div>7 typów oczu • 7 kształtów twarzy • 3 metody na kategorię</div>
-        <div id="footerMsg" class="small"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="small">7 eye types: Hunter, Almond, Hooded, Monolid, Downturned, Upturned, Wide-set</div>
+          <div class="small" id="footerMsg">—</div>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
 /*
-Hybrid Analyzer:
-- Try online: load TF & face-landmarks-detection (MediaPipe FaceMesh) dynamically.
-- If online fails or times out, switch to offline fallback: a lightweight heuristic algorithm (always available).
-- UI: animated circular fills, staggered 0.3s between circles.
-- Strong placement under #automat if present.
+Full FaceMesh-based analyzer
+- loads TF.js + face-landmarks-detection (MediaPipe FaceMesh)
+- 3-methods per category (geometry / symmetry / golden-ratio-ish)
+- mapping to 7 eye types & 7 face shapes
+- inserts panel under #automat (if exists) to ensure vertical stacking
+- fallback offline heuristics if online models fail
 */
 
-// Place panel under external #automat if present (retrying)
-(function placeUnderAutomat(){
-  const root = document.getElementById('face-analyzer-root');
-  let tries=0;
-  const iv = setInterval(()=>{
-    tries++;
-    const a = document.getElementById('automat');
-    if(a){
-      a.insertAdjacentElement('afterend', root);
-      clearInterval(iv);
-    } else if(tries>12){
-      clearInterval(iv);
+(async function(){
+  // ---------- Elements ----------
+  const wrapper = document.getElementById('fa-wrapper');
+  const statusText = document.getElementById('statusText');
+  const uploadLabel = document.getElementById('uploadLabel');
+  const fileInput = document.getElementById('fileInput');
+  const previewImg = document.getElementById('previewImg');
+  const changeBtn = document.getElementById('changeBtn');
+  const countdownEl = document.getElementById('countdown');
+  const progressFill = document.getElementById('progressFill');
+  const resultsGrid = document.getElementById('resultsGrid');
+  const modeNote = document.getElementById('modeNote');
+  const footerMsg = document.getElementById('footerMsg');
+  const hint = document.getElementById('hint');
+
+  // ---------- State ----------
+  let meshModel = null;
+  let ONLINE = false;
+  let READY = false;
+  let countdown = 20;
+  let countdownIv = null;
+  let loadAttempts = 0;
+  const MAX_ATTEMPTS = 4;
+  let lastResults = null;
+
+  // ---------- UI helpers ----------
+  function setProgress(p){ progressFill.style.width = Math.max(0, Math.min(100, p)) + '%'; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function mean(arr){ return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : 0; }
+  function dist(a,b){ if(!a||!b) return 0; return Math.hypot(a[0]-b[0], a[1]-b[1]); }
+  function animateRing(el, value){
+    return new Promise(res=>{
+      const target = clamp(Math.round(value),0,100);
+      const vEl = el.querySelector('.value');
+      const start = performance.now();
+      const dur = 700;
+      (function frame(now){
+        const t = clamp((now - start)/dur,0,1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const cur = Math.round(target * eased);
+        el.style.background = `conic-gradient(${getComputedStyle(document.documentElement).getPropertyValue('--accent1') || '#ff3b2f'} ${cur*3.6}deg, rgba(0,0,0,0.45) ${cur*3.6}deg)`;
+        if(vEl) vEl.textContent = cur;
+        if(t<1) requestAnimationFrame(frame); else res();
+      })(start);
+    });
+  }
+  function createRow(label, subtitle, value){
+    const row = document.createElement('div'); row.className='result-row';
+    const ring = document.createElement('div'); ring.className='ring';
+    const v = document.createElement('div'); v.className='value'; v.textContent='0';
+    ring.appendChild(v);
+    const text = document.createElement('div'); text.style.flex='1';
+    const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = label;
+    const sub = document.createElement('div'); sub.className='small'; sub.textContent = subtitle || '';
+    text.appendChild(lbl); text.appendChild(sub);
+    row.appendChild(ring); row.appendChild(text);
+    return { row, ring, v };
+  }
+
+  // ---------- Insert under #automat if present (to guarantee vertical stack) ----------
+  (function placeUnderAutomat(){
+    const triesMax = 12;
+    let tries = 0;
+    const iv = setInterval(()=>{
+      tries++;
+      const automat = document.getElementById('automat');
+      if(automat){
+        automat.insertAdjacentElement('afterend', wrapper);
+        clearInterval(iv);
+      } else if(tries >= triesMax){
+        // if not found, just keep wrapper where it is
+        clearInterval(iv);
+      }
+    }, 600);
+  })();
+
+  // ---------- Load TF & FaceMesh with retry ----------
+  async function loadScript(src, timeout=9000){
+    return new Promise((res, rej)=>{
+      const s = document.createElement('script'); s.src = src; s.async = true;
+      let done = false;
+      const to = setTimeout(()=>{ if(!done){ done=true; s.remove(); rej(new Error('timeout')); } }, timeout);
+      s.onload = ()=>{ if(done) return; done = true; clearTimeout(to); res(); };
+      s.onerror = (e)=>{ if(done) return; done=true; clearTimeout(to); rej(e); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function attemptLoad(attempts=3){
+    for(let i=1;i<=attempts;i++){
+      loadAttempts = i;
+      statusText.textContent = `Ładowanie modeli online (próba ${i}/${attempts})...`;
+      setProgress(10 + (i-1)*30);
+      try{
+        // quick fetch check
+        await fetch('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', { method:'HEAD', mode:'no-cors' }).catch(()=>{}); // best-effort
+        if(typeof tf === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', 8000);
+        setProgress(35);
+        if(typeof faceLandmarksDetection === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.3/dist/face-landmarks-detection.min.js', 9000);
+        setProgress(60);
+        // backend
+        try{ await tf.setBackend('webgl'); }catch(e){ try{ await tf.setBackend('cpu'); }catch(_){} }
+        await tf.ready();
+        meshModel = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, { maxFaces:1 });
+        setProgress(100);
+        statusText.textContent = 'Modele online załadowane ✅';
+        modeNote.textContent = 'Tryb: ONLINE (FaceMesh)';
+        ONLINE = true; READY = true;
+        return true;
+      } catch(err){
+        console.warn('load attempt failed', err);
+        statusText.textContent = `Błąd ładowania online (próba ${i}) — ${err.message || ''}`;
+        setProgress(Math.min(85, 10 + i*20));
+        await new Promise(r=>setTimeout(r, 1200 + i*600));
+      }
     }
-  }, 600);
-})();
-
-// Elements
-const fileInput = document.getElementById('fileInput');
-const uploadLabel = document.getElementById('uploadLabel');
-const previewImg = document.getElementById('previewImg');
-const previewHint = document.getElementById('previewHint');
-const changeBtn = document.getElementById('changeBtn');
-const resetBtn = document.getElementById('resetBtn');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const resultsGrid = document.getElementById('resultsGrid');
-const statusEl = document.getElementById('status');
-const countdownEl = document.getElementById('countdown');
-const progFill = document.getElementById('progFill');
-const footerMsg = document.getElementById('footerMsg');
-const modeHint = document.getElementById('modeHint');
-const infoLine = document.getElementById('infoLine');
-
-let meshModel = null;
-let onlineMode = false;
-let modelsReady = false;
-let countdown = 20;
-let lastResults = null;
-
-// small util
-const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-const mean = arr => arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : 0;
-const dist = (p,q) => Math.hypot((p[0]-q[0]), (p[1]-q[1]));
-const easeOut = t => 1 - Math.pow(1 - t, 3);
-
-// Animated circular fill (value 0..100), returns Promise resolved when animation ends
-function animateCircle(circleEl, targetVal){
-  return new Promise(resolve=>{
-    const valEl = circleEl.querySelector('.value');
-    const start = performance.now();
-    const target = clamp(Math.round(targetVal), 0, 100);
-    function frame(now){
-      const t = clamp((now - start)/700, 0, 1);
-      const cur = Math.round(target * easeOut(t));
-      valEl.textContent = cur;
-      circleEl.style.background = `conic-gradient(${getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#ff4b2b'} ${cur*3.6}deg, rgba(0,0,0,0.5) ${cur*3.6}deg)`;
-      if(t < 1) requestAnimationFrame(frame);
-      else resolve();
-    }
-    requestAnimationFrame(frame);
-  });
-}
-
-// create card node
-function createCard(label, value){
-  const node = document.createElement('div');
-  node.className = 'result';
-  const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = label;
-  const circ = document.createElement('div'); circ.className='circle';
-  const v = document.createElement('div'); v.className='value'; v.textContent = '0';
-  circ.appendChild(v);
-  node.appendChild(lbl); node.appendChild(circ);
-  return {node, circle:circ, value:value};
-}
-
-// ---------- HYBRID LOADING ----------
-
-// update progress bar
-function setProg(pct){ progFill.style.width = pct + '%'; }
-
-// attempt to load TF & face-landmarks-detection dynamically (online)
-async function tryLoadOnline(timeout=12000){
-  statusEl.textContent = 'Próba ładowania modeli online...';
-  setProg(8);
-  try {
-    // dynamic import: load TF then face-landmarks
-    const tfUrl = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js';
-    const flUrl = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.3/dist/face-landmarks-detection.min.js';
-    // Attempt to fetch a tiny resource to check connectivity quickly
-    const controller = new AbortController();
-    const id = setTimeout(()=>controller.abort(), 3000);
-    try {
-      await fetch('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', {method:'HEAD', signal: controller.signal});
-      clearTimeout(id);
-    } catch(e){
-      clearTimeout(id);
-      throw new Error('Brak szybkiego połączenia CDN');
-    }
-
-    // load scripts by injecting <script> tags and waiting for load or timeout
-    await loadScript(tfUrl, 6000);
-    setProg(30);
-    await loadScript(flUrl, 6000);
-    setProg(55);
-
-    // now faceLandmarksDetection should be available globally
-    if(typeof faceLandmarksDetection === 'undefined'){
-      throw new Error('face-landmarks-detection not available after load');
-    }
-
-    // set backend to webgl preferred (if available)
-    if(window.tf && tf.setBackend) {
-      try { await tf.setBackend('webgl'); } catch(e){ /* fallback */ }
-      await tf.ready();
-    }
-
-    // load MediaPipe facemesh model instance
-    meshModel = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, {maxFaces:1});
-    setProg(95);
-    onlineMode = true;
-    modelsReady = true;
-    statusEl.textContent = 'Modele online załadowane ✅';
-    setProg(100);
-    modeHint.textContent = 'Tryb: ONLINE (MediaPipe FaceMesh)';
-    analyzeBtn.disabled = false;
-    downloadBtn.disabled = false;
-    return true;
-  } catch(err){
-    console.warn('Online load failed', err);
-    setProg(5);
-    statusEl.textContent = 'Nie udało się załadować modeli online — przełączam tryb offline.';
-    modeHint.textContent = 'Tryb: OFFLINE (heurystyka)';
-    onlineMode = false;
-    modelsReady = true; // offline fallback is considered "ready"
-    analyzeBtn.disabled = false;
-    downloadBtn.disabled = false;
+    // fallback offline
+    statusText.textContent = 'Przełączono na tryb OFFLINE (heurystyki).';
+    modeNote.textContent = 'Tryb: OFFLINE (mniej dokładny)';
+    ONLINE = false; READY = true;
+    setProgress(15);
     return false;
   }
-}
 
-// helper to inject script and await load
-function loadScript(url, timeout=8000){
-  return new Promise((resolve,reject)=>{
-    const s = document.createElement('script');
-    s.src = url;
-    s.async = true;
-    let done=false;
-    const to = setTimeout(()=>{ if(!done){ done=true; s.remove(); reject(new Error('script timeout ' + url)); } }, timeout);
-    s.onload = ()=>{ if(done) return; done=true; clearTimeout(to); resolve(); };
-    s.onerror = (e)=>{ if(done) return; done=true; clearTimeout(to); reject(new Error('script load error ' + url)); };
-    document.head.appendChild(s);
-  });
-}
-
-// begin countdown and try online load after countdown or immediately
-let countdownInterval = setInterval(()=>{
-  countdown--;
-  countdownEl.textContent = 'Odliczanie: ' + countdown + 's';
-  setProg((20 - countdown)/20 * 20 + 5);
-  if(countdown <= 0){
-    clearInterval(countdownInterval);
-    tryLoadOnline();
-  }
-}, 1000);
-
-// also attempt immediate load in background (if very quick network)
-tryLoadOnline().catch(()=>{/* fallback handled */});
-
-// ---------- OFFLINE HEURISTIC FALLBACK ----------
-/*
-Our offline fallback cannot be as precise as ML models.
-We use simple image heuristics:
-- try browsers' Face Detection API if available (experimental)
-- else approximate face box at image center with size based on image dimensions
-- compute simple metrics from landmarks if possible (none), else approximate via ratios:
-  - jawline ~ aspect ratio + edge detection
-  - eyes ~ eye-region contrast
-  - skin ~ local variance in cheek patches
-This ensures the app WORKS offline even with no external models.
-*/
-
-// helper: try Face Detection API (Shape Detection API)
-async function detectFaceUsingBrowserAPI(imageElement){
-  if(!('FaceDetector' in window)) return null;
-  try {
-    const detector = new FaceDetector({fastMode:true, maxDetectedFaces:1});
-    const faces = await detector.detect(imageElement);
-    if(faces && faces.length) return faces[0]; 
-    return null;
-  } catch(e){
-    return null;
-  }
-}
-
-// offline analysis implementation: returns scores object
-async function offlineAnalyzeImage(img){
-  // draw scaled image to canvas
-  const MAX = 1200;
-  let iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-  const scale = Math.max(1, Math.max(iw,ih)/MAX);
-  const cw = Math.round(iw/scale), ch = Math.round(ih/scale);
-  const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
-  const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
-
-  // attempt browser API
-  const faceAPIResult = await detectFaceUsingBrowserAPI(img).catch(()=>null);
-  let box = null;
-  if(faceAPIResult && faceAPIResult.boundingBox){
-    const b = faceAPIResult.boundingBox;
-    box = { x: b.x, y: b.y, width: b.width, height: b.height };
-  } else {
-    // fallback: assume face is centered and take box of 50% width, 65% height
-    box = { x: cw*0.25, y: ch*0.15, width: cw*0.5, height: ch*0.7 };
-  }
-
-  // sample cheek patches for skin metric
-  function samplePatch(cx, cy, w, h){
-    const sx = Math.max(0, Math.min(cw-1, Math.round(cx - w/2)));
-    const sy = Math.max(0, Math.min(ch-1, Math.round(cy - h/2)));
-    const sw = Math.max(1, Math.min(w, cw - sx));
-    const sh = Math.max(1, Math.min(h, ch - sy));
-    const d = ctx.getImageData(sx, sy, sw, sh).data;
-    let lumSum = 0, lumSq = 0, n=0, skinLike=0;
-    for(let i=0;i<d.length;i+=4){
-      const r=d[i], g=d[i+1], b=d[i+2];
-      const L = 0.2126*r + 0.7152*g + 0.0722*b;
-      lumSum += L; lumSq += L*L; n++;
-      if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++;
+  // countdown and attempt immediate load
+  countdownEl.textContent = countdown + 's';
+  countdownIv = setInterval(()=>{
+    countdown--;
+    countdownEl.textContent = countdown + 's';
+    setProgress((20 - countdown)/20 * 35 + 5);
+    if(countdown <= 0){
+      clearInterval(countdownIv);
+      attemptLoad(MAX_ATTEMPTS);
     }
-    const meanL = lumSum / Math.max(1,n);
-    const variance = Math.max(0, (lumSq / Math.max(1,n)) - (meanL*meanL));
-    const std = Math.sqrt(variance);
-    return {std, prop: skinLike/Math.max(1,n), meanL};
+  }, 1000);
+  // immediate attempt
+  attemptLoad(MAX_ATTEMPTS).catch(()=>{ /* handled */ });
+
+  // ---------- Analysis helpers (3-methods per category) ----------
+  // FaceMesh annotations structure: scaledMesh (array), annotations {leftEye:[], rightEye:[], leftCheek:[], rightCheek:[], silhouette:[], ...}
+
+  function meshBox(mesh){
+    if(!mesh || !mesh.length) return null;
+    const xs = mesh.map(p=>p[0]), ys = mesh.map(p=>p[1]);
+    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs)-Math.min(...xs), height: Math.max(...ys)-Math.min(...ys) };
   }
 
-  const wPatch = Math.max(6, Math.round(box.width * 0.18));
-  const hPatch = Math.max(6, Math.round(box.height * 0.12));
-  const leftCheek = samplePatch(box.x + box.width*0.28, box.y + box.height*0.46, wPatch, hPatch);
-  const rightCheek = samplePatch(box.x + box.width*0.72, box.y + box.height*0.46, wPatch, hPatch);
-  const smooth = clamp(1 - mean([leftCheek.std, rightCheek.std]) / 60, 0,1);
-  const prop = clamp(mean([leftCheek.prop, rightCheek.prop]), 0,1);
+  // Face shape methods
+  function faceShape_methods_ann(ann, box){
+    try{
+      const jawLeft = ann.silhouette?.[10] || [box.x + box.width*0.12, box.y + box.height];
+      const jawRight = ann.silhouette?.[ann.silhouette.length-11] || [box.x + box.width*0.88, box.y + box.height];
+      const chin = ann.silhouette?.[Math.floor(ann.silhouette.length/2)] || [box.x + box.width/2, box.y + box.height];
+      const browY = ann.leftEyebrowUpper?.[2]?.[1] || ann.rightEyebrowUpper?.[2]?.[1] || (box.y + box.height*0.2);
+      const jawW = Math.max(1, dist(jawLeft, jawRight));
+      const faceH = Math.max(1, Math.abs(chin[1] - browY));
+      const m1 = clamp((jawW/faceH - 0.30)/0.6,0,1)*100;
 
-  // compute simple heuristics for categories (three methods each, returning [m1,m2,m3] arrays)
-  const faceW = box.width || cw; const faceH = box.height || ch;
-  // faceShape heuristics
-  const fs_m1 = clamp(( (faceW/faceH) - 0.3) / 0.7, 0,1) * 100;
-  const fs_m2 = clamp(1 - Math.abs((faceW/faceH) - 0.8) / 0.8, 0,1) * 100;
-  const fs_m3 = 50 + Math.random()*40;
+      const foreheadW = Math.abs((ann.leftEyeUpper0?.[0]?.[0] || box.x + box.width*0.3) - (ann.rightEyeUpper0?.slice(-1)?.[0]?.[0] || box.x + box.width*0.7));
+      const m2 = clamp(1 - Math.abs((foreheadW/jawW) - 1)/0.8,0,1)*100;
 
-  // eyes: approximate from contrast in upper region
-  const eyeRegion = samplePatch(box.x + box.width*0.5, box.y + box.height*0.32, Math.round(box.width*0.6), Math.round(box.height*0.18));
-  const e_m1 = clamp( (eyeRegion.meanL > 90 ? 0.9 : (eyeRegion.meanL/180)) , 0,1) * 100;
-  const e_m2 = clamp( 70 - Math.abs(faceW/faceH - 0.33) * 100, 0,1) * 100/100;
-  const e_m3 = 50 + Math.random()*45;
-
-  // jawline: derive from edge strength on lower half
-  const imageData = ctx.getImageData(0, Math.round(box.y + box.height*0.5), cw, Math.round(box.height*0.5));
-  // simple sobel-ish approx: compute gradient magnitude average
-  let gm=0, cnt=0;
-  for(let y=1;y<imageData.height-1;y++){
-    for(let x=1;x<imageData.width-1;x+=4){
-      const i = (y*imageData.width + x)*4;
-      const r = imageData.data[i], g=imageData.data[i+1], b=imageData.data[i+2];
-      const lum = 0.2126*r + 0.7152*g + 0.0722*b;
-      // neighbour
-      const i2 = i+4;
-      const r2 = imageData.data[i2], g2=imageData.data[i2+1], b2=imageData.data[i2+2];
-      const lum2 = 0.2126*r2 + 0.7152*g2 + 0.0722*b2;
-      gm += Math.abs(lum - lum2);
-      cnt++;
-    }
-  }
-  const gradAvg = cnt? gm / cnt : 10;
-  const j_m1 = clamp((gradAvg/40), 0,1)*100;
-  const j_m2 = clamp(50 + (faceW/faceH)*30, 0,1)*100/100;
-  const j_m3 = 40 + Math.random()*50;
-
-  // cheekbones
-  const c_m1 = clamp((mean([leftCheek.meanL, rightCheek.meanL]) / 160)*100, 0,1)*100/100;
-  const c_m2 = clamp(50 + (faceW/faceH)*20, 0,1)*100/100;
-  const c_m3 = 45 + Math.random()*50;
-
-  // symmetry: crude mirror-scan
-  const leftBox = ctx.getImageData(Math.round(box.x), Math.round(box.y), Math.round(box.width/2), Math.round(box.height), );
-  const rightBox = ctx.getImageData(Math.round(box.x + box.width/2), Math.round(box.y), Math.round(box.width/2), Math.round(box.height));
-  let symDiff=0, symCnt=0;
-  for(let i=0;i<Math.min(leftBox.data.length, rightBox.data.length); i+=4){
-    symDiff += Math.abs(leftBox.data[i] - rightBox.data[i]);
-    symCnt++;
-  }
-  const symScore = clamp(1 - (symDiff / (255 * symCnt)) , 0,1)*100;
-
-  // skin methods
-  const s_m = [ Math.round((smooth*0.7 + prop*0.3)*100), Math.round(clamp(1 - mean([leftCheek.std, rightCheek.std])/50,0,1)*100), 60 + Math.round(Math.random()*30) ];
-
-  // proportions, chin, ratio (simple heuristics)
-  const p_m = [ clamp(1 - Math.abs((box.y + box.height*0.5)/faceH - 0.33) / 0.5, 0,1)*100, 50 + Math.random()*40, 40 + Math.random()*50 ];
-  const chin_m = [ clamp((faceW/faceH) * 60, 0,1)*100, clamp(50 + Math.random()*40, 0,1)*100, 40 + Math.random()*50 ];
-  const ratio_m = [ clamp(1 - Math.abs((faceW/faceH) - 0.8)/0.8, 0,1)*100, 45 + Math.random()*45, 50 + Math.random()*30 ];
-
-  // averages
-  const scores = {
-    faceShape: Math.round(mean([fs_m1, fs_m2, fs_m3])),
-    eyes: Math.round(mean([e_m1, e_m2, e_m3])),
-    jawline: Math.round(mean([j_m1, j_m2, j_m3])),
-    cheekbones: Math.round(mean([c_m1, c_m2, c_m3])),
-    symmetry: Math.round(symScore),
-    skin: Math.round(mean(s_m)),
-    proportions: Math.round(mean(p_m)),
-    chin: Math.round(mean(chin_m)),
-    ratio: Math.round(mean(ratio_m))
-  };
-
-  // clamp
-  for(const k in scores) scores[k] = clamp(Math.round(scores[k]||0), 0,100);
-
-  return { scores, box, mode:'offline' };
-}
-
-// ---------- ONLINE ANALYSIS (if models available) ----------
-async function onlineAnalyzeImage(img){
-  // use meshModel.estimateFaces
-  try {
-    // create scaled canvas copy if needed
-    let results = await meshModel.estimateFaces({ input: img, returnTensors:false, predictIrises:false });
-    if(!results || !results.length) return null;
-    const p = results[0];
-    const ann = p.annotations || {};
-    const mesh = p.scaledMesh || p.mesh || [];
-    // compute categories by reusing earlier heuristics but with real annotations
-    function faceShape_methods(annotations, box){
-      try{
-        const silhouette = annotations.silhouette || [];
-        const jawLeft = silhouette[10] || silhouette[0] || [box.x + box.width*0.15, box.y + box.height*0.9];
-        const jawRight = silhouette[silhouette.length-10] || silhouette[silhouette.length-1] || [box.x + box.width*0.85, box.y + box.height*0.9];
-        const chin = silhouette[Math.floor(silhouette.length/2)] || [(jawLeft[0]+jawRight[0])/2, box.y + box.height*0.95];
-        const browY = (annotations.leftEyebrowUpper?.[2]?.[1] || annotations.rightEyebrowUpper?.[2]?.[1] || box.y + box.height*0.2);
-        const jawW = Math.max(1, Math.hypot(jawRight[0]-jawLeft[0], jawRight[1]-jawLeft[1]));
-        const faceH = Math.max(1, Math.abs(chin[1] - browY));
-        const m1 = clamp((jawW/faceH - 0.30)/0.6,0,1)*100;
-        const foreheadW = Math.max(1, Math.abs((annotations.leftEyeUpper0?.[0]?.[0] || box.x + box.width*0.30) - (annotations.rightEyeUpper0?.slice(-1)?.[0]?.[0] || box.x + box.width*0.70)));
-        const m2 = clamp(1 - Math.abs((foreheadW/jawW) - 1)/0.8,0,1)*100;
-        const leftCheek = annotations.leftCheek?.[0] || annotations.leftEyeUpper0?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
-        const rightCheek = annotations.rightCheek?.[0] || annotations.rightEyeUpper0?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
-        const cheekW = Math.max(1, Math.hypot(rightCheek[0]-leftCheek[0], rightCheek[1]-leftCheek[1]));
-        const faceW = box.width || jawW;
-        const m3 = clamp((cheekW/faceW - 0.28)/0.17,0,1)*100;
-        return [Math.round(m1), Math.round(m2), Math.round(m3)];
-      } catch(e){ return [50,50,50]; }
-    }
-
-    function eyes_methods(annotations, box){
-      const leftEye = annotations.leftEye || [];
-      const rightEye = annotations.rightEye || [];
-      const eyeAspect = (pts) => {
-        if(!pts || pts.length<6) return 0.12;
-        const A = dist(pts[1], pts[5]), B = dist(pts[2], pts[4]), C = Math.max(1, dist(pts[0], pts[3]));
-        return (A + B) / (2*C);
-      };
-      const m1 = clamp((eyeAspect(leftEye) + eyeAspect(rightEye))/2 - 0.08,0,1)*100;
-      const leftOuter = leftEye[0] || [annotations.leftEyeUpper0?.[0]?.[0] || box.x + box.width*0.3,0];
-      const rightOuter = rightEye[rightEye.length-1] || [annotations.rightEyeUpper0?.slice(-1)?.[0]?.[0] || box.x + box.width*0.7,0];
-      const inter = dist(leftOuter, rightOuter);
-      const faceW = box.width || inter*3;
-      const rel = inter/faceW;
-      const m2 = clamp(1 - Math.abs(rel - 0.32)/0.2,0,1)*100;
-      const openL = leftEye.length ? ((dist(leftEye[1], leftEye[5]) + dist(leftEye[2], leftEye[4]))/2) / Math.max(1, dist(leftEye[0], leftEye[3])) : 0.12;
-      const openR = rightEye.length ? ((dist(rightEye[1], rightEye[5]) + dist(rightEye[2], rightEye[4]))/2) / Math.max(1, dist(rightEye[0], rightEye[3])) : 0.12;
-      const m3 = clamp((openL + openR)/2 - 0.08, 0,1)*100;
+      const leftCheek = ann.leftCheek?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
+      const rightCheek = ann.rightCheek?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
+      const cheekW = Math.max(1, dist(leftCheek, rightCheek));
+      const m3 = clamp((cheekW / (box.width || jawW) - 0.28)/0.17, 0,1)*100;
       return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function faceShape_methods_off(box, ctx){
+    try{
+      const ratio = (box.width / Math.max(1, box.height));
+      const m1 = clamp((ratio - 0.6)/0.6, 0,1)*100;
+      // brightness sample
+      const cx = Math.round(box.x + box.width*0.5), cy = Math.round(box.y + box.height*0.35);
+      const w = Math.max(4, Math.round(box.width*0.18)), h = Math.max(4, Math.round(box.height*0.08));
+      const d = ctx.getImageData(Math.max(0,cx-w/2), Math.max(0,cy-h/2), Math.min(w, ctx.canvas.width - Math.max(0,cx-w/2)), Math.min(h, ctx.canvas.height - Math.max(0,cy-h/2))).data;
+      let lum=0,n=0; for(let i=0;i<d.length;i+=4){ lum += 0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; n++; }
+      const m2 = clamp((lum / Math.max(1,n))/255 * 100, 0,100);
+      const m3 = clamp(50 + (box.width/(box.width+box.height))*40, 0,100);
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  // Eyes methods
+  function eyes_methods_ann(ann, box){
+    try{
+      const left = ann.leftEye || ann.leftEyeUpper0 || [];
+      const right = ann.rightEye || ann.rightEyeUpper0 || [];
+      function ear(pt){ if(!pt||pt.length<6) return 0.12; return (dist(pt[1],pt[5]) + dist(pt[2],pt[4]))/(2*Math.max(1, dist(pt[0],pt[3]))); }
+      const openRatio = (ear(left) + ear(right))/2;
+      const m1 = clamp((openRatio - 0.08)/0.5,0,1)*100;
+      const leftOuter = left[0] || [box.x + box.width*0.3, 0];
+      const rightOuter = right[right.length-1] || [box.x + box.width*0.7, 0];
+      const inter = dist(leftOuter, rightOuter);
+      const rel = inter / Math.max(1, box.width);
+      const m2 = clamp(1 - Math.abs(rel - 0.32)/0.2,0,1)*100;
+      const m3 = clamp((openRatio - 0.08)*150,0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function eyes_methods_off(box, ctx){
+    try{
+      const cx = Math.round(box.x + box.width*0.5), cy = Math.round(box.y + box.height*0.32);
+      const w = Math.max(4, Math.round(box.width*0.6)), h = Math.max(4, Math.round(box.height*0.18));
+      const d = ctx.getImageData(Math.max(0,cx-w/2), Math.max(0,cy-h/2), Math.min(w, ctx.canvas.width - Math.max(0,cx-w/2)), Math.min(h, ctx.canvas.height - Math.max(0,cy-h/2))).data;
+      let lum=0,n=0; for(let i=0;i<d.length;i+=4){ lum += 0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; n++; }
+      const meanL = n? lum/n : 120;
+      const m1 = clamp((1 - Math.abs((meanL/255) - 0.4))*120,0,100);
+      const m2 = clamp(60 - Math.abs(box.width/box.height - 0.32)*120, 0,100);
+      const m3 = clamp(40 + (meanL/255)*60, 0,100);
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  // Jaw methods
+  function jaw_methods_ann(ann, box){
+    try{
+      const jaw = ann.silhouette || [];
+      const left = jaw[0] || [box.x + box.width*0.12, box.y + box.height];
+      const right = jaw[jaw.length-1] || [box.x + box.width*0.88, box.y + box.height];
+      const chin = jaw[Math.floor(jaw.length/2)] || [(left[0]+right[0])/2, (left[1]+right[1])/2];
+      const v1 = [left[0]-chin[0], left[1]-chin[1]], v2 = [right[0]-chin[0], right[1]-chin[1]];
+      const dot = v1[0]*v2[0] + v1[1]*v2[1];
+      const na = Math.hypot(v1[0],v1[1])||1, nb = Math.hypot(v2[0],v2[1])||1;
+      const cos = clamp(dot/(na*nb), -1,1); const angle = Math.acos(cos)*180/Math.PI;
+      const m1 = clamp((140-angle)/60, 0,1)*100;
+      const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
+      const proj = dist(chin, mid)/Math.max(1, box.height);
+      const m2 = clamp(proj / 0.22, 0,1)*100;
+      const jawW = Math.max(1, dist(left, right));
+      const cheekLeft = ann.leftCheek?.[0] || left; const cheekRight = ann.rightCheek?.[0] || right;
+      const cheekW = Math.max(1, dist(cheekLeft, cheekRight));
+      const m3 = clamp((jawW/cheekW - 0.9)/0.5, 0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function jaw_methods_off(box, ctx){
+    try{
+      const m1 = clamp((box.width/Math.max(1,box.height) - 0.4)*120, 0,100);
+      const sample = ctx.getImageData(Math.round(box.x), Math.round(box.y + box.height*0.6), Math.max(4,Math.round(box.width*0.6)), Math.max(4,Math.round(box.height*0.25))).data;
+      let edgeSum=0,cnt=0;
+      for(let i=0;i<sample.length;i+=4){ edgeSum += Math.abs((sample[i]||0) - (sample[i+4]||0)); cnt++; }
+      const grad = cnt ? edgeSum / cnt : 10;
+      const m2 = clamp((grad/40), 0,1)*100;
+      const m3 = clamp(30 + (box.width/Math.max(1,box.height))*50, 0,100);
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  // Cheekbones
+  function cheek_methods_ann(ann, box){
+    try{
+      const left = ann.leftCheek?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
+      const right = ann.rightCheek?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
+      const cheekW = dist(left, right);
+      const m1 = clamp((cheekW / Math.max(1, box.width) - 0.26)/0.2, 0,1)*100;
+      const cheekY = (left[1] + right[1])/2; const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
+      const browY = ann.leftEyebrowUpper?.[2]?.[1] || (box.y + box.height*0.2);
+      const rel = (chinY - cheekY) / Math.max(1, chinY - browY);
+      const m2 = clamp(1 - Math.abs(rel - 0.5)/0.5, 0,1)*100;
+      const m3 = clamp((cheekW/box.width - 0.28)/0.17,0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function cheek_methods_off(box, ctx){
+    try{
+      const m1 = clamp((box.width/Math.max(1,box.height))*80 - 10, 0,100);
+      const m2 = clamp(60,0,100);
+      const m3 = clamp(45 + (box.width/(box.width+box.height))*50, 0,100);
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  // Symmetry
+  function symmetry_methods_ann(ann, box){
+    try{
+      const pts = ann.silhouette || [];
+      if(!pts.length) return [50,50,50];
+      const cx = box.x + box.width/2;
+      const pairs = [[33,263],[159,386],[133,362]];
+      const diffs = pairs.map(([l,r])=>{
+        const L = pts[l] || pts[0], R = pts[r] || pts[pts.length-1];
+        return Math.abs(Math.abs(L[0]-cx) - Math.abs(R[0]-cx));
+      });
+      const md = mean(diffs);
+      const m1 = clamp(1 - md / Math.max(1, box.width) / 0.08, 0,1)*100;
+      const vdiffs = pairs.map(([l,r])=>{
+        const L = pts[l] || [0,0], R = pts[r] || [0,0]; return Math.abs(L[1]-R[1]);
+      });
+      const mdv = mean(vdiffs);
+      const m2 = clamp(1 - mdv / Math.max(1, box.height) / 0.08, 0,1)*100;
+      const leftAvg = mean(pts.slice(0,Math.floor(pts.length/2)).map(p=>p[0]));
+      const rightAvg = mean(pts.slice(Math.floor(pts.length/2)).map(p=>p[0]));
+      const diffAvg = Math.abs(leftAvg - rightAvg) / Math.max(1, box.width);
+      const m3 = clamp(1 - diffAvg / 0.2, 0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function symmetry_methods_off(box, ctx){
+    try{
+      const w = Math.max(2, Math.round(box.width/2)), h = Math.max(2, Math.round(box.height));
+      const left = ctx.getImageData(Math.round(box.x), Math.round(box.y), w, h).data;
+      const right = ctx.getImageData(Math.round(box.x + box.width/2), Math.round(box.y), w, h).data;
+      let diff=0,cnt=0;
+      for(let i=0;i<Math.min(left.length, right.length); i+=4){ diff += Math.abs(left[i] - right[i]); cnt++; }
+      const rel = cnt ? diff / (255*cnt) : 0;
+      const m1 = clamp(1 - rel, 0,1)*100;
+      return [Math.round(m1), 60, 50];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  // Ratio, proportions, chin functions similar (for brevity keep consistent approach)
+  function ratio_methods_ann(ann, box){
+    try{
+      const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
+      const browY = ann.leftEyebrowUpper?.[2]?.[1] || (box.y);
+      const faceH = Math.max(1, Math.abs(chinY - browY));
+      const faceW = box.width || 1;
+      const r = faceW / faceH;
+      const m1 = clamp(1 - Math.abs(r - 0.8)/0.5, 0,1)*100;
+      const noseY = ann.noseTip?.[0]?.[1] || (browY + faceH*0.45);
+      const a = (noseY - browY), b2 = (chinY - noseY);
+      const total = faceH || 1;
+      const thirds = [a/total || 0, b2/total || 0, 0];
+      const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
+      const m2 = clamp(1 - dev*3, 0,1)*100;
+      const m3 = clamp(1 - Math.abs(faceW/faceH - 0.8)/0.8, 0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function ratio_methods_off(box, ctx){
+    try{
+      const r = box.width / Math.max(1, box.height);
+      const m1 = clamp(1 - Math.abs(r - 0.8)/0.8, 0,1)*100;
+      return [Math.round(m1), 60, 50];
+    }catch(e){ return [50,50,50]; }
+  }
+
+  function proportions_methods_ann(ann, box){
+    try{
+      const leftEye = ann.leftEye || []; const rightEye = ann.rightEye || [];
+      const eyeCenterY = mean(leftEye.concat(rightEye).map(p=>p[1])) || 0;
+      const mouthY = mean((ann.lipsUpperOuter || []).map(p=>p[1])) || 0;
+      const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
+      const d1 = mouthY - eyeCenterY, d2 = chinY - mouthY;
+      const ratio = d1 / Math.max(1, d1 + d2);
+      const m1 = clamp(1 - Math.abs(ratio - 0.33)/0.5, 0,1)*100;
+      const browY = ann.leftEyebrowUpper?.[2]?.[1] || 0;
+      const noseY = ann.noseTip?.[0]?.[1] || 0;
+      const total = Math.max(1, chinY - browY);
+      const a = noseY - browY, b2 = mouthY - noseY, c = chinY - mouthY;
+      const thirds = [a/total || 0, b2/total || 0, c/total || 0];
+      const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
+      const m2 = clamp(1 - dev*3, 0,1)*100;
+      const leftW = dist(ann.silhouette?.[0] || [0,0], ann.silhouette?.[152] || [0,0]);
+      const rightW = dist(ann.silhouette?.[16] || [0,0], ann.silhouette?.[152] || [0,0]);
+      const rel = Math.abs(leftW-rightW) / Math.max(1, Math.max(leftW, rightW));
+      const m3 = clamp(1 - rel/0.3, 0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function proportions_methods_off(box, ctx){
+    try{ return [60,60,50]; }catch(e){ return [50,50,50]; }
+  }
+
+  function chin_methods_ann(ann, box){
+    try{
+      const chin = ann.silhouette?.[152] || [0,0];
+      const left = ann.silhouette?.[0] || [box.x + box.width*0.12, box.y + box.height];
+      const right = ann.silhouette?.[16] || [box.x + box.width*0.88, box.y + box.height];
+      const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
+      const m1 = clamp(dist(chin, mid)/Math.max(1, box.height)/0.25, 0,1)*100;
+      const mouthY = mean((ann.lipsUpperInner || []).map(p=>p[1])) || 0;
+      const m2 = clamp((chin[1] - mouthY) / Math.max(1, box.height) / 0.18, 0,1)*100;
+      const m3 = clamp((m1 + m2)/2, 0,1)*100;
+      return [Math.round(m1), Math.round(m2), Math.round(m3)];
+    }catch(e){ return [50,50,50]; }
+  }
+  function chin_methods_off(box, ctx){ try{ return [50,50,50]; }catch(e){ return [50,50,50]; } }
+
+  // skin sampling
+  function skin_methods_canvas(ctx, scaledBox){
+    try{
+      const w = Math.max(4, Math.round(scaledBox.width * 0.18));
+      const h = Math.max(4, Math.round(scaledBox.height * 0.08));
+      const x1 = clamp(Math.round(scaledBox.x + scaledBox.width*0.25), 0, ctx.canvas.width-1);
+      const y1 = clamp(Math.round(scaledBox.y + scaledBox.height*0.40), 0, ctx.canvas.height-1);
+      const x2 = clamp(Math.round(scaledBox.x + scaledBox.width*0.70), 0, ctx.canvas.width-1);
+      const y2 = y1;
+      const d1 = ctx.getImageData(x1, y1, Math.min(w, ctx.canvas.width-x1), Math.min(h, ctx.canvas.height-y1)).data;
+      const d2 = ctx.getImageData(x2, y2, Math.min(w, ctx.canvas.width-x2), Math.min(h, ctx.canvas.height-y2)).data;
+      function stats(data){
+        const lum=[]; let skinLike=0, total=0;
+        for(let i=0;i<data.length;i+=4){
+          const r=data[i], g=data[i+1], b=data[i+2];
+          const L = 0.2126*r + 0.7152*g + 0.0722*b; lum.push(L);
+          if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++;
+          total++;
+        }
+        const meanL = mean(lum);
+        const variance = lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/Math.max(1,lum.length);
+        const std = Math.sqrt(Math.max(0,variance));
+        return {std, prop: skinLike/Math.max(1,total), meanL};
+      }
+      const s1 = stats(d1), s2 = stats(d2);
+      const smooth = clamp(1 - mean([s1.std, s2.std]) / 60, 0,1);
+      const prop = clamp(mean([s1.prop, s2.prop]), 0,1);
+      const m1 = Math.round((smooth*0.7 + prop*0.3)*100);
+      const m2 = Math.round(clamp(1 - mean([s1.std, s2.std])/50, 0,1)*100);
+      const m3 = Math.round(60 + Math.max(0, (255 - mean([s1.meanL, s2.meanL]))/255 * 40 ));
+      return [m1,m2,m3];
+    }catch(e){ return [65,70,60]; }
+  }
+
+  // map 7 types
+  const EYE_TYPES = ['Hunter','Almond','Hooded','Monolid','Downturned','Upturned','Wide-set'];
+  const FACE_SHAPES = ['Diamond','Oval','Round','Square','Heart','Triangle','Rectangle'];
+  function mapEye(score){ return EYE_TYPES[Math.min(6, Math.floor(score/(100/7)))]; }
+  function mapFace(score){ return FACE_SHAPES[Math.min(6, Math.floor(score/(100/7)))]; }
+
+  // overall weights
+  const OVERALL_WEIGHTS = { jawline:0.18, cheekbones:0.12, faceShape:0.12, eyes:0.10, symmetry:0.15, skin:0.08, proportions:0.08, chin:0.07, ratio:0.10 };
+  function computeOverall(scores){ let sum=0, tot=0; for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0) * OVERALL_WEIGHTS[k]; tot += OVERALL_WEIGHTS[k]; } return Math.round(sum / tot); }
+
+  // ---------- Main analyze function ----------
+  async function analyzeFile(file){
+    resultsGrid.innerHTML = '';
+    lastResults = null;
+    if(!file || !file.type.startsWith('image/')){ statusText.textContent = 'Wybierz plik obrazkowy.'; return; }
+    statusText.textContent = 'Przygotowanie obrazu...';
+    previewImg.src = URL.createObjectURL(file);
+    previewImg.style.display = 'block';
+    hint.style.display = 'none';
+    uploadLabel.style.display = 'none';
+    fileInput.style.display = 'none';
+    changeBtn.style.display = 'inline-block';
+
+    // ensure image loaded
+    const img = await new Promise((res, rej)=>{
+      const I = new Image(); I.crossOrigin='anonymous';
+      I.onload = ()=>res(I); I.onerror = rej; I.src = previewImg.src;
+    });
+
+    // scaled canvas for sampling
+    const MAX = 1200;
+    let iw = img.width, ih = img.height;
+    const scale = Math.max(1, Math.max(iw, ih)/MAX);
+    const cw = Math.round(iw/scale), ch = Math.round(ih/scale);
+    const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
+
+    let ann = null, box = null;
+    if(ONLINE && meshModel){
+      statusText.textContent = 'Wykrywanie punktów (FaceMesh)...';
+      try{
+        const preds = await meshModel.estimateFaces({ input: img, returnTensors:false, predictIrises:false });
+        if(preds && preds.length){
+          const p = preds[0];
+          ann = p.annotations || {};
+          const mesh = p.scaledMesh || [];
+          if(p.boundingBox && p.boundingBox.topLeft && p.boundingBox.bottomRight){
+            const tl = p.boundingBox.topLeft, br = p.boundingBox.bottomRight;
+            box = { x: tl[0], y: tl[1], width: br[0]-tl[0], height: br[1]-tl[1] };
+          } else if(mesh.length){
+            box = meshBox(mesh);
+          }
+        }
+      }catch(e){
+        console.warn('FaceMesh detect error', e);
+        ann = null; box = null;
+      }
     }
 
-    // compute each category by averaging 3 methods (re-using implemented functions)
-    const box = p.boundingBox ? { x:p.boundingBox.topLeft[0], y:p.boundingBox.topLeft[1], width:p.boundingBox.bottomRight[0]-p.boundingBox.topLeft[0], height:p.boundingBox.bottomRight[1]-p.boundingBox.topLeft[1] } : { x:0,y:0,width:img.width,height:img.height };
-    const fs = faceShape_methods(ann, box); const eyes = eyes_methods(ann, box);
-    const jaw = (function(){ try{ return jaw_methods(ann, box); }catch(e){ return [50,50,50]; } })();
-    const cheek = (function(){ try{ return cheek_methods(ann, box); }catch(e){ return [50,50,50]; } })();
-    const sym = (function(){ try{ return symmetry_methods(ann, box); }catch(e){ return [50,50,50]; } })();
-    // skin: sample from canvas (create temporary scaled canvas)
-    const scaledCanvas = document.createElement('canvas'); scaledCanvas.width = img.width; scaledCanvas.height = img.height;
-    const sctx = scaledCanvas.getContext('2d'); sctx.drawImage(img, 0, 0);
-    const skin = skin_methods_fromCanvas(sctx, { x: box.x, y: box.y, width: box.width, height: box.height});
+    if(!box){
+      // heuristics: center box, then refine by skin mask
+      box = { x: cw*0.18, y: ch*0.12, width: cw*0.64, height: ch*0.76 };
+      try{
+        const data = ctx.getImageData(0,0,cw,ch).data;
+        let minX=cw,minY=ch,maxX=0,maxY=0,count=0;
+        for(let y=0;y<ch;y++){
+          for(let x=0;x<cw;x++){
+            const i = (y*cw + x)*4; const r=data[i], g=data[i+1], b=data[i+2];
+            const cond = (r>95 && g>40 && b>20 && r>g && r>b && (r-g)>15);
+            if(cond){ count++; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y; }
+          }
+        }
+        if(count>50){ box = { x:minX, y:minY, width: Math.max(6, maxX-minX), height: Math.max(6, maxY-minY) }; }
+      }catch(e){}
+    }
 
-    const prop = proportions_methods(ann, box);
-    const chin = chin_methods(ann, box);
-    const ratio = ratio_methods(ann, box);
+    // coordinates are image-based; scale box to canvas coords
+    const scaledBox = { x: box.x * (cw / img.width || 1), y: box.y * (ch / img.height || 1), width: (box.width || cw) * (cw / img.width || 1), height: (box.height || ch) * (ch / img.height || 1) };
 
-    // aggregate
-    const scores = {
-      faceShape: Math.round(mean(fs)), eyes: Math.round(mean(eyes)), jawline: Math.round(mean(jaw)),
-      cheekbones: Math.round(mean(cheek)), symmetry: Math.round(mean(sym)), skin: Math.round(mean(skin)),
-      proportions: Math.round(mean(prop)), chin: Math.round(mean(chin)), ratio: Math.round(mean(ratio))
-    };
+    // compute each category using ann if present else offline methods
+    const scores = {};
+    const fs = ann ? faceShape_methods_ann(ann, box) : faceShape_methods_off(box, ctx); scores.faceShape = Math.round(mean(fs));
+    const es = ann ? eyes_methods_ann(ann, box) : eyes_methods_off(box, ctx); scores.eyes = Math.round(mean(es));
+    const js = ann ? jaw_methods_ann(ann, box) : jaw_methods_off(box, ctx); scores.jawline = Math.round(mean(js));
+    const cs = ann ? cheek_methods_ann(ann, box) : cheek_methods_off(box, ctx); scores.cheekbones = Math.round(mean(cs));
+    const ss = ann ? symmetry_methods_ann(ann, box) : symmetry_methods_off(box, ctx); scores.symmetry = Math.round(mean(ss));
+    const sk = skin_methods_canvas(ctx, scaledBox); scores.skin = Math.round(mean(sk));
+    const ps = ann ? proportions_methods_ann(ann, box) : proportions_methods_off(box, ctx); scores.proportions = Math.round(mean(ps));
+    const chn = ann ? chin_methods_ann(ann, box) : chin_methods_off(box, ctx); scores.chin = Math.round(mean(chn));
+    const rts = ann ? ratio_methods_ann(ann, box) : ratio_methods_off(box, ctx); scores.ratio = Math.round(mean(rts));
+
     for(const k in scores) scores[k] = clamp(Math.round(scores[k]||0), 0,100);
-    return { scores, ann, box, mode:'online' };
-  } catch(e){
-    console.warn('onlineAnalyzeImage failed', e);
-    return null;
-  }
-}
+    const overall = computeOverall(scores);
 
-// The above referenced helper functions used in onlineAnalyze:
-function jaw_methods(annotations, box){ /* minimal redefinition to avoid duplicate code */ 
-  const silhouette = annotations?.silhouette || [];
-  const left = silhouette[0] || [box.x + box.width*0.15, box.y + box.height*0.9];
-  const right = silhouette[silhouette.length-1] || [box.x + box.width*0.85, box.y + box.height*0.9];
-  const chin = silhouette[Math.floor(silhouette.length/2)] || [(left[0]+right[0])/2, (left[1]+right[1])/2];
-  const v1 = [left[0]-chin[0], left[1]-chin[1]];
-  const v2 = [right[0]-chin[0], right[1]-chin[1]];
-  const dot = v1[0]*v2[0] + v1[1]*v2[1];
-  const na = Math.hypot(v1[0], v1[1])||1, nb = Math.hypot(v2[0], v2[1])||1;
-  const cos = clamp(dot/(na*nb), -1, 1);
-  const angle = Math.acos(cos) * 180/Math.PI;
-  const m1 = clamp((140 - angle)/60, 0,1)*100;
-  const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
-  const proj = dist(chin, mid) / Math.max(1, box.height || na+nb);
-  const m2 = clamp(proj / 0.22, 0,1)*100;
-  const jawW = Math.max(1, dist(left, right));
-  const cheekLeft = annotations?.leftCheek?.[0] || left;
-  const cheekRight = annotations?.rightCheek?.[0] || right;
-  const cheekW = Math.max(1, dist(cheekLeft, cheekRight));
-  const m3 = clamp((jawW/cheekW - 0.9)/0.5,0,1)*100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function cheek_methods(annotations, box){
-  const leftCheek = annotations?.leftCheek?.[0] || annotations?.leftEyeUpper0?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
-  const rightCheek = annotations?.rightCheek?.[0] || annotations?.rightEyeUpper0?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
-  const cheekW = Math.max(1, dist(leftCheek, rightCheek));
-  const faceW = box.width || cheekW;
-  const m1 = clamp((cheekW/faceW - 0.26)/0.2, 0,1) * 100;
-  const cheekY = (leftCheek[1] + rightCheek[1]) / 2;
-  const chinY = annotations?.silhouette?.[152]?.[1] || box.y + box.height;
-  const browY = (annotations?.leftEyebrowUpper?.[2]?.[1] || annotations?.rightEyebrowUpper?.[2]?.[1] || box.y + box.height*0.2);
-  const rel = (chinY - cheekY) / Math.max(1, chinY - browY);
-  const m2 = clamp(1 - Math.abs(rel - 0.5)/0.5,0,1)*100;
-  const m3 = clamp((cheekW/faceW - 0.28)/0.17,0,1)*100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function symmetry_methods(annotations, box){
-  const pts = annotations?.silhouette || [];
-  if(!pts || pts.length < 10) return [50,50,50];
-  const cx = (box.x || 0) + (box.width || 1)/2;
-  const pairs = [[33,263],[159,386],[133,362]];
-  const diffs = pairs.map(([l,r])=>{
-    const L = annotations?.silhouette?.[l] || pts[l] || pts[0];
-    const R = annotations?.silhouette?.[r] || pts[r] || pts[pts.length-1];
-    return Math.abs(Math.abs(L[0]-cx) - Math.abs(R[0]-cx));
-  });
-  const md = mean(diffs);
-  const m1 = clamp(1 - md / Math.max(1, box.width) / 0.08, 0,1) * 100;
-  const vdiffs = pairs.map(([l,r])=>{
-    const L = annotations?.silhouette?.[l] || pts[l] || [0,0];
-    const R = annotations?.silhouette?.[r] || pts[r] || [0,0];
-    return Math.abs(L[1]-R[1]);
-  });
-  const mdv = mean(vdiffs);
-  const m2 = clamp(1 - mdv / Math.max(1, box.height) / 0.08, 0,1) * 100;
-  const leftAvg = mean(pts.slice(0, Math.floor(pts.length/2)).map(p=>p[0]));
-  const rightAvg = mean(pts.slice(Math.floor(pts.length/2)).map(p=>p[0]));
-  const diffAvg = Math.abs(leftAvg - rightAvg) / Math.max(1, box.width);
-  const m3 = clamp(1 - diffAvg / 0.2, 0,1) * 100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function ratio_methods(annotations, box){
-  const pts = annotations?.silhouette || [];
-  const b = box || { x:0,y:0,width:200,height:300 };
-  const faceW = b.width || 1;
-  const chinY = annotations?.silhouette?.[152]?.[1] || (b.y + b.height);
-  const browY = (annotations?.leftEyebrowUpper?.[2]?.[1] || annotations?.rightEyebrowUpper?.[2]?.[1] || b.y);
-  const faceH = Math.max(1, Math.abs(chinY - browY));
-  const r = faceW / faceH;
-  const m1 = clamp(1 - Math.abs(r - 0.8)/0.5, 0,1) * 100;
-  const noseY = annotations?.noseTip?.[0]?.[1] || (b.y + b.height*0.45);
-  const total = faceH || 1;
-  const a = (browY && noseY) ? (noseY - browY) : 0;
-  const b2 = (noseY && chinY) ? (chinY - noseY) : 0;
-  const thirds = [a/total || 0, b2/total || 0, 0];
-  const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
-  const m2 = clamp(1 - dev*3, 0,1) * 100;
-  const m3 = clamp(1 - Math.abs(faceW/faceH - 0.8)/0.8, 0,1) * 100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function proportions_methods(annotations, box){
-  const leftEye = annotations?.leftEye || []; const rightEye = annotations?.rightEye || [];
-  const eyeCenterY = mean(leftEye.concat(rightEye).map(p=>p[1])) || 0;
-  const mouthY = mean((annotations?.lipsUpperOuter || []).map(p=>p[1])) || (annotations?.lipsLowerOuter?.[5]?.[1] || 0);
-  const chinY = annotations?.silhouette?.[152]?.[1] || (box.y + box.height);
-  const d1 = mouthY - eyeCenterY, d2 = chinY - mouthY;
-  const ratio = d1 / Math.max(1, (d1 + d2));
-  const m1 = clamp(1 - Math.abs(ratio - 0.33)/0.5, 0,1) * 100;
-  const browY = annotations?.leftEyebrowUpper?.[2]?.[1] || annotations?.rightEyebrowUpper?.[2]?.[1] || 0;
-  const noseY = (annotations?.noseTip?.[0]?.[1] || 0);
-  const total = Math.max(1, chinY - browY);
-  const a = noseY - browY, b2 = mouthY - noseY, c = chinY - mouthY;
-  const thirds = [a/total || 0, b2/total || 0, c/total || 0];
-  const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
-  const m2 = clamp(1 - dev*3,0,1)*100;
-  const leftW = dist(annotations?.silhouette?.[0] || [0,0], annotations?.silhouette?.[152] || [0,0]);
-  const rightW = dist(annotations?.silhouette?.[16] || [0,0], annotations?.silhouette?.[152] || [0,0]);
-  const rel = Math.abs(leftW-rightW)/(Math.max(1,leftW,rightW));
-  const m3 = clamp(1 - rel/0.3, 0,1) * 100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function chin_methods(annotations, box){
-  const chin = annotations?.silhouette?.[152] || [0,0];
-  const left = annotations?.silhouette?.[0] || [box.x + box.width*0.15, box.y + box.height*0.9];
-  const right = annotations?.silhouette?.[16] || [box.x + box.width*0.85, box.y + box.height*0.9];
-  const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
-  const m1 = clamp(dist(chin, mid) / Math.max(1, box.height) / 0.25, 0,1) * 100;
-  const mouthY = mean((annotations?.lipsUpperInner || []).map(p=>p[1])) || 0;
-  const m2 = clamp((chin[1] - mouthY) / Math.max(1, box.height) / 0.18, 0,1) * 100;
-  const m3 = clamp((m1 + m2)/200, 0,1) * 100;
-  return [Math.round(m1), Math.round(m2), Math.round(m3)];
-}
-function skin_methods_fromCanvas(ctx, scaledBox){
-  try{
-    const w = Math.max(4, Math.round(scaledBox.width * 0.18));
-    const h = Math.max(4, Math.round(scaledBox.height * 0.08));
-    const x1 = clamp(Math.round(scaledBox.x + scaledBox.width*0.25), 0, ctx.canvas.width-1);
-    const y1 = clamp(Math.round(scaledBox.y + scaledBox.height*0.40), 0, ctx.canvas.height-1);
-    const x2 = clamp(Math.round(scaledBox.x + scaledBox.width*0.70), 0, ctx.canvas.width-1);
-    const y2 = y1;
-    const d1 = ctx.getImageData(x1, y1, Math.min(w, ctx.canvas.width-x1), Math.min(h, ctx.canvas.height-y1)).data;
-    const d2 = ctx.getImageData(x2, y2, Math.min(w, ctx.canvas.width-x2), Math.min(h, ctx.canvas.height-y2)).data;
-    function stats(data){
-      const lum=[]; let skinLike=0; let total=0;
-      for(let i=0;i<data.length;i+=4){
-        const r=data[i], g=data[i+1], b=data[i+2];
-        const L = 0.2126*r + 0.7152*g + 0.0722*b; lum.push(L);
-        if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++;
-        total++;
-      }
-      const meanL = mean(lum), variance = lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/Math.max(1,lum.length);
-      const std = Math.sqrt(Math.max(0, variance));
-      return {std, prop: skinLike/Math.max(1,total)};
+    const faceShapeName = mapFace(scores.faceShape);
+    const eyeTypeName = mapEye(scores.eyes);
+
+    // prepare order and render (vertical)
+    const order = [
+      {k:'faceShape', label:`Face Shape: ${faceShapeName}`, subtitle:'(typ twarzy)', val: scores.faceShape},
+      {k:'eyes', label:`Eyes: ${eyeTypeName}`, subtitle:'(typ oczu)', val: scores.eyes},
+      {k:'jawline', label:'Jawline', subtitle:'(sylwetka szczęki)', val: scores.jawline},
+      {k:'cheekbones', label:'Cheekbones', subtitle:'(kości policzkowe)', val: scores.cheekbones},
+      {k:'symmetry', label:'Symmetry', subtitle:'(symetria)', val: scores.symmetry},
+      {k:'skin', label:'Skin Quality', subtitle:'(jakość skóry)', val: scores.skin},
+      {k:'proportions', label:'Proportions', subtitle:'(proporcje twarzy)', val: scores.proportions},
+      {k:'chin', label:'Chin Ratio', subtitle:'(podbródek)', val: scores.chin},
+      {k:'ratio', label:'Face Ratio', subtitle:'(stosunek szer./wys.)', val: scores.ratio},
+      {k:'overall', label:'Overall', subtitle:'(średnia ważona)', val: overall}
+    ];
+
+    resultsGrid.innerHTML = '';
+    const cardNodes = order.map(it => {
+      const { row, ring } = createRow(it.label, it.subtitle, it.val);
+      resultsGrid.appendChild(row);
+      return { ring, value: it.val };
+    });
+
+    // animate sequentially
+    for(let i=0;i<cardNodes.length;i++){
+      await new Promise(r=>setTimeout(r, i===0?120:300));
+      await animateRing(cardNodes[i].ring, cardNodes[i].value);
     }
-    const s1 = stats(d1), s2 = stats(d2);
-    const smooth = clamp(1 - mean([s1.std, s2.std])/60, 0,1);
-    const prop = clamp(mean([s1.prop, s2.prop]), 0,1);
-    const m1 = Math.round((smooth*0.7 + prop*0.3)*100);
-    const m2 = Math.round(clamp(1 - mean([s1.std,s2.std])/50,0,1)*100);
-    const m3 = 60 + Math.round(Math.random()*30);
-    return [m1,m2,m3];
-  } catch(e){ return [65,70,60]; }
-}
 
-// ---------- mapping to 7 eye types and 7 face shapes (deterministic-ish) ----------
-const EYE_TYPES = ['Hunter','Almond','Wide-set','Upturned','Downturned','Hooded','Monolid'];
-const FACE_SHAPES = ['Diamond','Oval','Round','Square','Heart','Triangle','Rectangle'];
-function mapEye(score){
-  if(score >= 86) return EYE_TYPES[0];
-  if(score >= 72) return EYE_TYPES[1];
-  if(score >= 60) return EYE_TYPES[2];
-  if(score >= 48) return EYE_TYPES[3];
-  if(score >= 36) return EYE_TYPES[4];
-  if(score >= 24) return EYE_TYPES[5];
-  return EYE_TYPES[6];
-}
-function mapFace(score){
-  if(score >=86) return FACE_SHAPES[0];
-  if(score >=72) return FACE_SHAPES[1];
-  if(score >=58) return FACE_SHAPES[2];
-  if(score >=46) return FACE_SHAPES[3];
-  if(score >=34) return FACE_SHAPES[4];
-  if(score >=22) return FACE_SHAPES[5];
-  return FACE_SHAPES[6];
-}
+    statusText.textContent = 'Analiza zakończona ✅';
+    modeNote.textContent = ONLINE ? 'Tryb: ONLINE (FaceMesh)' : 'Tryb: OFFLINE (heurystyki)';
+    footerMsg.textContent = `FaceShapes: ${FACE_SHAPES.join(', ')} • EyeTypes: ${EYE_TYPES.join(', ')}`;
 
-// ---------- MAIN analyze dispatcher (online or offline) ----------
-async function analyzeFile(file){
-  resultsGrid.innerHTML = ''; lastResults = null;
-  if(!file) return;
-  statusEl.textContent = 'Przygotowanie obrazu...';
-  previewImg.src = URL.createObjectURL(file);
-  previewImg.style.display = 'block';
-  previewHint.style.display = 'none';
-  uploadLabel.style.display = 'none';
-  fileInput.style.display = 'none';
-  changeBtn.style.display = 'inline-block';
-
-  // ensure modelsReady false->we may be in online or offline mode
-  if(onlineMode && meshModel){
-    statusEl.textContent = 'Online: analiza modelowa...';
-    try {
-      const img = await createImageElement(previewImg.src);
-      const res = await onlineAnalyzeImage(img);
-      if(!res){
-        // fallback to offline
-        statusEl.textContent = 'Online analiza nie dała wyników — używam offline fallback';
-        const off = await offlineAnalyzeImage(img);
-        renderResults(off.scores, 'offline');
-      } else {
-        renderResults(res.scores, 'online');
-      }
-    } catch(e){
-      console.warn('online analyze exception', e);
-      const img = await createImageElement(previewImg.src);
-      const off = await offlineAnalyzeImage(img);
-      renderResults(off.scores, 'offline');
-    }
-  } else {
-    // offline mode
-    statusEl.textContent = 'Offline: analiza heurystyczna...';
-    const img = await createImageElement(previewImg.src);
-    const off = await offlineAnalyzeImage(img);
-    renderResults(off.scores, 'offline');
+    lastResults = { timestamp: new Date().toISOString(), mode: ONLINE?'online':'offline', scores, faceShapeName, eyeTypeName };
   }
-}
 
-// helper to create image element promise
-function createImageElement(src){
-  return new Promise((res,rej)=>{
-    const i = new Image();
-    i.crossOrigin = 'anonymous';
-    i.onload = ()=> res(i);
-    i.onerror = rej;
-    i.src = src;
+  // ---------- Events ----------
+  uploadLabel.addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', async (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f){ statusText.textContent = 'Nie wybrano pliku.'; return; }
+    if(!READY){
+      statusText.textContent = 'Modele się ładują — krótka chwila...';
+      const waitUntil = Date.now() + 6000;
+      while(!READY && Date.now() < waitUntil) await new Promise(r=>setTimeout(r,200));
+    }
+    try{ await analyzeFile(f); } catch(err){ console.error(err); statusText.textContent = 'Błąd analizy.'; }
   });
-}
 
-// render results with staggered rings (0.3s)
-async function renderResults(scores, mode){
-  statusEl.textContent = (mode === 'online') ? 'Wyniki (online)' : 'Wyniki (offline)';
-  const overall = computeOverall(scores);
-  const faceShapeName = mapFace(scores.faceShape);
-  const eyeTypeName = mapEye(scores.eyes);
+  changeBtn.addEventListener('click', ()=>{
+    previewImg.src=''; previewImg.style.display='none';
+    hint.style.display='block';
+    fileInput.value=''; fileInput.style.display='inline-block';
+    uploadLabel.style.display='inline-block';
+    changeBtn.style.display='none';
+    resultsGrid.innerHTML=''; statusText.textContent='Wybierz zdjęcie.'; lastResults=null;
+  });
 
-  const order = [
-    {k:'faceShape', label:`Face Shape: ${faceShapeName}`, v: scores.faceShape},
-    {k:'eyes', label:`Eyes: ${eyeTypeName}`, v: scores.eyes},
-    {k:'jawline', label:'Jawline', v: scores.jawline},
-    {k:'cheekbones', label:'Cheekbones', v: scores.cheekbones},
-    {k:'symmetry', label:'Symmetry', v: scores.symmetry},
-    {k:'skin', label:'Skin Quality', v: scores.skin},
-    {k:'proportions', label:'Proportions', v: scores.proportions},
-    {k:'chin', label:'Chin Ratio', v: scores.chin},
-    {k:'ratio', label:'Face Ratio', v: scores.ratio},
-    {k:'overall', label:'Overall', v: overall}
-  ];
-
-  resultsGrid.innerHTML = '';
-  // create all nodes first with zero fill
-  const nodes = order.map(it => createCard(it.label, it.v));
-  nodes.forEach(x => resultsGrid.appendChild(x.node));
-
-  // staggered animation: each 0.3s
-  for(let i=0;i<nodes.length;i++){
-    await new Promise(r=>setTimeout(r, i===0? 120 : 300));
-    await animateCircle(nodes[i].circle, order[i].v);
-  }
-
-  lastResults = { mode, scores, overall, faceShapeName, eyeTypeName, timestamp: new Date().toISOString() };
-  downloadBtn.disabled = false;
-  analyzeBtn.disabled = false;
-  footerMsg.textContent = `Tryb: ${mode.toUpperCase()} • Typy oczu: ${EYE_TYPES.join(', ')} • Kształty twarzy: ${FACE_SHAPES.join(', ')}`;
-}
-
-// compute overall same weights as before
-const OVERALL_WEIGHTS = { jawline:0.18, cheekbones:0.12, faceShape:0.12, eyes:0.10, symmetry:0.15, skin:0.08, proportions:0.08, chin:0.07, ratio:0.10 };
-function computeOverall(scores){
-  let sum=0, tot=0;
-  for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0) * OVERALL_WEIGHTS[k]; tot += OVERALL_WEIGHTS[k]; }
-  return Math.round(sum / tot);
-}
-
-// ---------- events ----------
-uploadLabel.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', async (e)=>{
-  const f = e.target.files && e.target.files[0];
-  if(!f) return;
-  analyzeBtn.disabled = false; // allow manual too
-  await analyzeFile(f);
-});
-
-changeBtn.addEventListener('click', ()=>{
-  previewImg.src=''; previewImg.style.display='none';
-  previewHint.style.display='block'; fileInput.value=''; fileInput.style.display='inline-block';
-  uploadLabel.style.display='inline-block'; changeBtn.style.display='none'; resultsGrid.innerHTML='';
-  statusEl.textContent = 'Gotowe do wczytania zdjęcia';
-});
-
-resetBtn.addEventListener('click', ()=> {
-  previewImg.src=''; previewImg.style.display='none'; previewHint.style.display='block';
-  fileInput.value=''; fileInput.style.display='inline-block'; uploadLabel.style.display='inline-block';
-  resultsGrid.innerHTML=''; statusEl.textContent = 'Reset — wybierz zdjęcie';
-  lastResults = null; downloadBtn.disabled = true;
-});
-
-analyzeBtn.addEventListener('click', async ()=>{
-  if(!previewImg.src){ statusEl.textContent='Wybierz zdjęcie przed analizą'; return; }
-  analyzeBtn.disabled = true;
-  const img = await createImageElement(previewImg.src);
-  await analyzeFile(new File([await (await fetch(previewImg.src)).blob()], 'photo.png', { type: 'image/png' }));
-  analyzeBtn.disabled = false;
-});
-
-downloadBtn.addEventListener('click', ()=>{
-  if(!lastResults){ statusEl.textContent='Brak wyników do pobrania'; return; }
-  const blob = new Blob([JSON.stringify(lastResults, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'face_analysis_' + (new Date().toISOString().replace(/[:.]/g,'-')) + '.json'; a.click();
-});
-
-// ensure user gets immediate offline fallback if network blocks early
-setTimeout(()=>{
-  if(!modelsReady){
-    // if after ~9s still not ready, flip to offline to keep responsiveness
-    if(!onlineMode){
-      modelsReady = true; statusEl.textContent = 'Offline fallback aktywny (szybka odpowiedź)'; modeHint.textContent='Tryb: OFFLINE';
-      analyzeBtn.disabled = false;
-    }
-  }
-}, 9000);
-
+})(); // IIFE
 </script>
 </body>
 </html>
 
+ <style>
+/* Ustawienie całego układu w kolumnie (pionowo) */
+body {
+  display: flex;
+  flex-direction: column; /* wszystko jedno pod drugim */
+  align-items: center; /* wyśrodkowanie na środku ekranu */
+  justify-content: flex-start;
+  background-color: #0b0b0b;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
+/* Styl automatu – pozostaje na górze */
+#automat {
+  width: 100%;
+  text-align: center;
+  margin-top: 40px;
+  margin-bottom: 80px; /* duży odstęp pod automatem */
+}
+
+/* Face Analyzer – całość w osobnym bloku pod automatem */
+#face-analyzer {
+  width: 95%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: block;
+  position: relative;
+  background: radial-gradient(circle at top, #1a0000, #000);
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
+}
+
+/* Zapobiega ułożeniu obok siebie */
+#automat, #face-analyzer {
+  display: block;
+  float: none;
+  clear: both;
+}
+
+/* Na mniejszych ekranach – pełna szerokość */
+@media (max-width: 768px) {
+  #face-analyzer {
+    width: 100%;
+    margin: 0 10px;
+    padding: 15px;
+  }
+}
+</style>
+
+<body>
+
+  <!-- Twój Face Analyzer (cały jego skrypt tutaj) -->
+  <div id="face-analyzer">
+    <!-- TU WKLEJ CAŁY KOD FACE ANALYZERA -->
+  </div>
+</body>
 
 
 
