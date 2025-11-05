@@ -660,191 +660,273 @@ Odwrócił się powoli i wrócił do biurka. Na stole parowała kawa, a on wzią
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Face Analyzer — by Lnp7890</title>
+<title>Face Analyzer — Mobile-friendly (online)</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <style>
-:root{ --bg:linear-gradient(180deg,#041523 0%, #071226 100%); --accent:#4e9eff; }
-*{box-sizing:border-box}
-body{ margin:0; min-height:100vh; font-family:Inter,system-ui,Arial; background:var(--bg); color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:18px; }
-.app{ width:100%; max-width:1100px; background:rgba(255,255,255,0.02); border-radius:12px; padding:18px; box-shadow:0 16px 60px rgba(2,6,23,0.7);}
-.header{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-.title{ font-size:20px; color:var(--accent); margin:0; }
-.controls{ display:flex; gap:8px; align-items:center; }
-.btn{ background:#0f1724; color:var(--accent); border:1px solid rgba(255,255,255,0.03); padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
-.btn[disabled]{ opacity:.5; cursor:not-allowed; }
-.center{ display:flex; align-items:flex-start; gap:18px; margin-top:14px; flex-wrap:wrap; }
-.preview-area{ display:flex; flex-direction:column; align-items:center; gap:8px; min-width:260px; }
-#preview{ display:none; width:300px; height:auto; border-radius:12px; border:2px solid rgba(255,255,255,0.03); box-shadow:0 8px 40px rgba(0,0,0,0.6); }
-.status{ min-height:28px; color:#fbbf24; text-align:center; margin-top:6px; }
-.progress{ font-size:13px; color:#94a3b8; }
-.results{ display:grid; grid-template-columns: repeat(auto-fit,minmax(110px,1fr)); gap:14px; margin-top:16px; }
-.card{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-.label{ font-size:13px; color:#cbd5e1; text-align:center; min-height:36px; }
-.circle{ width:96px; height:96px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#0f1728; position:relative; box-shadow:0 8px 20px rgba(2,6,23,0.5); }
-.val{ font-weight:800; font-size:18px; color:#fff; position:relative; z-index:2; }
-.legend{ font-size:12px; color:#94a3b8; text-align:center; margin-top:10px; }
-.footer-note{ margin-top:10px; font-size:12px; color:#94a3b8; text-align:center; }
-@media(max-width:820px){ .center{ flex-direction:column; align-items:center; } #preview{ width:70vw; max-width:340px; } }
+  :root{
+    --bg:#071226;
+    --card:#0f1724;
+    --accent:#4e9eff;
+    --muted:#94a3b8;
+    --ok:#10b981;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; font-family:Inter,system-ui,Arial;
+    background: linear-gradient(180deg,var(--bg), #021021);
+    color:#e6eef8; display:flex; align-items:flex-start; justify-content:center; padding:14px;
+  }
+  .wrap{ width:100%; max-width:920px; }
+  header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+  h1{font-size:18px; color:var(--accent); margin:0;}
+  .loader-box{ text-align:right; font-size:13px; color:var(--muted); }
+  .card{
+    background: rgba(255,255,255,0.02); border-radius:12px; padding:12px; box-shadow:0 12px 40px rgba(0,0,0,0.6);
+  }
+
+  .main{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+  .left{ flex:0 1 320px; min-width:260px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .right{ flex:1 1 320px; min-width:260px; }
+
+  #preview{
+    width:100%; max-width:320px; border-radius:12px; display:none; object-fit:cover;
+    border:2px solid rgba(255,255,255,0.04);
+  }
+
+  .file-row{ width:100%; display:flex; gap:8px; align-items:center; justify-content:center; }
+  .file-input { display:block; width:100%; padding:10px 12px; border-radius:10px; background:var(--card); color:var(--accent); border:1px solid rgba(255,255,255,0.03); cursor:pointer; text-align:center; font-weight:600;}
+  .small { font-size:13px; color:var(--muted); text-align:center; margin-top:6px; }
+
+  /* results layout mobile-first: labels above circles */
+  .results-grid{
+    display:grid;
+    grid-template-columns: repeat(2,1fr);
+    gap:12px;
+    margin-top:12px;
+  }
+  @media(min-width:720px){
+    .results-grid{ grid-template-columns: repeat(3,1fr); }
+  }
+  .metric{
+    display:flex; align-items:center; gap:10px; padding:8px; background:rgba(255,255,255,0.01); border-radius:10px; flex-direction:column;
+  }
+  .metric-label{ font-size:13px; color:var(--muted); text-align:center; margin-bottom:6px; }
+  .circle{
+    width:82px; height:82px; border-radius:50%; background:#071930; display:flex; align-items:center; justify-content:center; position:relative;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  }
+  .circle canvas{ width:82px; height:82px; display:block; border-radius:50%; }
+  .circle-value{ position:absolute; font-weight:800; font-size:16px; color:#fff; pointer-events:none; }
+
+  .controls-row{ display:flex; gap:8px; margin-top:10px; justify-content:center; }
+  .btn{ padding:8px 12px; border-radius:10px; background:var(--card); color:var(--accent); border:1px solid rgba(255,255,255,0.03); cursor:pointer; font-weight:700; }
+  .btn[disabled]{ opacity:.45; cursor:not-allowed; }
+
+  .info{ margin-top:8px; font-size:13px; color:var(--muted); text-align:center; }
+
+  footer{ margin-top:10px; font-size:12px; color:var(--muted); text-align:center; }
 </style>
 </head>
 <body>
-  <div class="app" role="main">
-    <div class="header">
-      <h1 class="title">Face Analyzer — by Lnp7890</h1>
-      <div class="controls">
-        <input id="fileInput" type="file" accept="image/*" class="btn" disabled>
-        <button id="changeBtn" class="btn" style="display:none">Zmień zdjęcie</button>
+  <div class="wrap">
+    <header>
+      <h1>Face Analyzer — Mobile friendly</h1>
+      <div class="loader-box">
+        <div id="status">Inicjalizacja modeli...</div>
+        <div id="progress" style="font-size:12px;color:var(--muted)">Ładowanie: 0/2 • Odliczanie: <span id="timer">20</span>s</div>
+      </div>
+    </header>
+
+    <div class="main card">
+      <div class="left">
+        <div style="width:100%; text-align:center;">
+          <label for="file" class="file-input" id="fileLabel">Wybierz zdjęcie (.jpg .png)</label>
+          <input id="file" accept="image/*" type="file" style="display:none">
+        </div>
+        <img id="preview" alt="Podgląd zdjęcia">
+        <div class="controls-row">
+          <button id="changeBtn" class="btn" style="display:none">Zmień zdjęcie</button>
+        </div>
+        <div class="small" id="infoText">Po wczytaniu zdjęcia analiza zacznie się automatycznie.</div>
+      </div>
+
+      <div class="right">
+        <div class="info card">
+          <div style="font-weight:700; color:var(--accent); margin-bottom:6px">Wyniki</div>
+          <div id="results" class="results-grid"></div>
+          <div class="info" style="margin-top:10px">Każda kategoria = średnia z 3 metod. Overall = ważona średnia.</div>
+        </div>
       </div>
     </div>
 
-    <div class="center">
-      <div class="preview-area" aria-live="polite">
-        <img id="preview" alt="Podgląd zdjęcia" />
-        <div id="status" class="status">Inicjalizuję...</div>
-        <div id="progress" class="progress">Ładowanie modeli: 0/3 • Odliczanie: <span id="timer">20</span>s</div>
-      </div>
-
-      <div style="flex:1; min-width:320px">
-        <div id="results" class="results" aria-live="polite"></div>
-        <div class="legend">Każda kategoria = średnia z 3 metod → skala 0–100. Wersja dokładna.</div>
-        <div class="footer-note">Jeżeli błąd się powtórzy: spróbuj innego zdjęcia (frontalnego), z większym kontrastem i bez silnych filtrów.</div>
-      </div>
-    </div>
+    <footer>Face Analyzer — działa online (modele z CDN). Nie trzeba nic instalować.</footer>
   </div>
 
-  <!-- face-api vladmandic build -->
-  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-  <script>
-/* Naprawiona wersja: bezpieczne pobieranie box/landmarks, czytelne błędy zamiast 'cannot read width' */
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<script>
+/* Mobile-friendly final: online models (CDN), 3-method per category, weighted overall,
+   labels above circles, responsive grid, 20s countdown + retry.
+*/
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/';
-const fileInput = document.getElementById('fileInput');
-const changeBtn = document.getElementById('changeBtn');
+const fileInput = document.getElementById('file');
+const fileLabel = document.getElementById('fileLabel');
 const preview = document.getElementById('preview');
 const statusEl = document.getElementById('status');
 const progressEl = document.getElementById('progress');
-const resultsEl = document.getElementById('results');
 const timerEl = document.getElementById('timer');
+const resultsEl = document.getElementById('results');
+const changeBtn = document.getElementById('changeBtn');
 
 let modelsLoaded = false;
 let countdown = 20;
 let countdownInterval = null;
 
-async function loadWithRetry(loadFn, name, attempts=3, timeoutMs=8000){
-  for(let i=1;i<=attempts;i++){
-    statusEl.textContent = `Ładowanie modelu: ${name} (próba ${i}/${attempts})...`;
+// ---------------- loader with retries and 20s countdown ----------------
+async function loadWithRetry(loadFn, name, attempts = 3, timeoutMs = 9000) {
+  for (let i = 1; i <= attempts; i++) {
+    progressEl.textContent = `Ładowanie: ${name} (${i}/${attempts}) • Odliczanie: ${countdown}s`;
     try {
-      await Promise.race([ loadFn(), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), timeoutMs)) ]);
-      progressEl.textContent = `Załadowano: ${name} (${i}/${attempts})`;
+      await Promise.race([loadFn(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs))]);
+      progressEl.textContent = `Załadowano: ${name} • Odliczanie: ${countdown}s`;
       return true;
-    } catch(err){
-      console.warn(`Loading ${name} attempt ${i} failed:`, err);
-      progressEl.textContent = `Błąd: ${name} (próba ${i}) — ponawianie...`;
-      await new Promise(r=>setTimeout(r,600));
+    } catch (err) {
+      console.warn(`${name} load attempt ${i} failed`, err);
+      progressEl.textContent = `Błąd: ${name} (próba ${i}) — ponawiam...`;
+      await new Promise(r => setTimeout(r, 600));
     }
   }
   throw new Error(`${name} failed after ${attempts} attempts`);
 }
 
-async function attemptFullLoad(isRetry){
+async function attemptLoadAll(retry=false){
   try {
     await loadWithRetry(() => faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), 'tinyFaceDetector');
     await loadWithRetry(() => faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), 'faceLandmark68Net');
+    // models loaded
     modelsLoaded = true;
     clearInterval(countdownInterval);
-    statusEl.textContent = '✅ Modele załadowane. Możesz wgrać zdjęcie.';
+    statusEl.textContent = '✅ Modele załadowane. Wybierz zdjęcie.';
     progressEl.textContent = 'Modele: gotowe';
+    fileLabel.textContent = 'Wybierz zdjęcie (.jpg/.png)';
     fileInput.disabled = false;
-  } catch(err){
-    console.error('Full load failed:', err);
-    statusEl.textContent = '❌ Nie udało się załadować modeli.';
-    if(!isRetry){
+  } catch (err) {
+    console.error('Full load failed', err);
+    statusEl.textContent = '❌ Błąd ładowania modeli.';
+    if (!retry) {
       progressEl.textContent = 'Ponawiam za 2s...';
       await new Promise(r=>setTimeout(r,2000));
-      countdown = 20; timerEl.textContent = countdown;
-      attemptFullLoad(true);
+      countdown = 20;
+      timerEl.textContent = countdown;
+      attemptLoadAll(true);
     } else {
-      progressEl.textContent = 'Błąd trwały — spróbuj odświeżyć stronę.';
+      progressEl.textContent = 'Błąd trwały — odśwież stronę i spróbuj ponownie.';
+      fileLabel.textContent = 'Model load error';
       fileInput.disabled = true;
     }
   }
 }
 
-function startLoader(){
-  countdownInterval = setInterval(()=>{
-    countdown--;
-    timerEl.textContent = countdown;
-    if(countdown <= 0){
-      clearInterval(countdownInterval);
-      if(!modelsLoaded){
-        statusEl.textContent = '⏳ Modele nie załadowały się w 20s — ponawiam ładowanie...';
-        attemptFullLoad(true);
-      }
+// start countdown and loader
+countdownInterval = setInterval(()=>{
+  countdown--;
+  timerEl.textContent = countdown;
+  if(countdown <= 0){
+    clearInterval(countdownInterval);
+    if(!modelsLoaded){
+      statusEl.textContent = '⏳ Modele nie załadowały się w 20s — ponawiam...';
+      attemptLoadAll(true);
     }
-  },1000);
-  attemptFullLoad(false);
-}
-statusEl.textContent = 'Rozpoczynam ładowanie modeli...';
-startLoader();
+  }
+},1000);
 
-/* ---------------- utilities ---------------- */
+statusEl.textContent = 'Rozpoczynam ładowanie modeli...';
+attemptLoadAll(false);
+
+// ---------------- utilities ----------------
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-function dist(a,b){ const dx=(a.x||a[0])-(b.x||b[0]), dy=(a.y||a[1])-(b.y||b[1]); return Math.hypot(dx,dy); }
 function mean(arr){ return arr.reduce((s,v)=>s+v,0)/arr.length; }
+function dist(a,b){ const ax=a.x||a[0], ay=a.y||a[1], bx=b.x||b[0], by=b.y||b[1]; return Math.hypot(ax-bx, ay-by); }
 function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
 
-/* animate & UI */
-function animateCircle(circleEl, valEl, target){
-  target = clamp(Math.round(target), 0, 100);
-  const duration = 900;
+// draw circular progress into canvas
+function drawCircleCanvas(canvas, value){
+  const size = Math.min(canvas.clientWidth, canvas.clientHeight);
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const r = size/2 - 6;
+  ctx.clearRect(0,0,size,size);
+  // background ring
+  ctx.beginPath(); ctx.arc(size/2, size/2, r, 0, 2*Math.PI); ctx.lineWidth = 8; ctx.strokeStyle = '#06202a'; ctx.stroke();
+  // arc
+  const end = (value/100) * 2*Math.PI - Math.PI/2;
+  ctx.beginPath(); ctx.arc(size/2,size/2, r, -Math.PI/2, end); ctx.lineWidth = 8; ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#4e9eff'; ctx.lineCap = 'round'; ctx.stroke();
+  // number will be rendered by overlay element
+}
+
+// create metric element (label above circle)
+function makeMetric(label, value){
+  const wrap = document.createElement('div');
+  wrap.className = 'metric';
+  const lbl = document.createElement('div'); lbl.className='metric-label'; lbl.textContent = label;
+  const circle = document.createElement('div'); circle.className='circle';
+  const canvas = document.createElement('canvas'); circle.appendChild(canvas);
+  const valEl = document.createElement('div'); valEl.className='circle-value'; valEl.textContent = '0';
+  circle.appendChild(valEl);
+  wrap.appendChild(lbl); wrap.appendChild(circle);
+
+  // animate value from 0->value
+  const duration = 800;
   const start = performance.now();
   function frame(now){
-    const t = clamp((now - start)/duration, 0,1);
-    const cur = Math.round(target * easeOutCubic(t));
-    const deg = cur * 3.6;
-    circleEl.style.background = `conic-gradient(#4e9eff ${deg}deg, #0f1728 ${deg}deg)`;
+    const t = clamp((now-start)/duration, 0,1);
+    const cur = Math.round(value * easeOutCubic(t));
     valEl.textContent = cur;
+    drawCircleCanvas(canvas, cur);
     if(t < 1) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-}
-function makeCard(label, value){
-  const card = document.createElement('div'); card.className='card';
-  const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = label;
-  const circ = document.createElement('div'); circ.className='circle';
-  const v = document.createElement('div'); v.className='val'; v.textContent = '0';
-  circ.appendChild(v); card.appendChild(lbl); card.appendChild(circ);
-  animateCircle(circ, v, value);
-  return card;
+  return wrap;
 }
 
-/* ---------------- core metric functions (same as before) ---------------- */
-/* For brevity I reuse the same functions as in your previous "dokładna" script.
-   Important change: robust extraction of 'box' & 'landmarks' below before calling these.
-*/
+// ---------------- core 3-method metrics (landmarks/box safe) ----------------
+// methods are similar to earlier "dokładna" scripts but robust against missing box
 
+function safeBoxFromDetection(det, landmarks){
+  // try multiple locations
+  if(!det) return null;
+  if(det.detection && det.detection.box) return det.detection.box;
+  if(det.box) return det.box;
+  if(det.alignedRect && det.alignedRect.box) return det.alignedRect.box;
+  // fallback estimate using landmarks
+  if(landmarks && landmarks.positions){
+    const xs = landmarks.positions.map(p=>p.x); const ys = landmarks.positions.map(p=>p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    return { x:minX, y:minY, width: (maxX-minX), height: (maxY-minY) };
+  }
+  return null;
+}
+
+// Face Shape methods
 function faceShape_methodA(landmarks, box){
-  const jaw = landmarks.getJawOutline ? landmarks.getJawOutline() : landmarks.positions.slice(0,17);
+  const jaw = (landmarks.getJawOutline) ? landmarks.getJawOutline() : landmarks.positions.slice(0,17);
   const jawW = dist(jaw[0], jaw[16]) || 1;
   const chin = landmarks.positions[8];
   const browY = mean(landmarks.positions.slice(17,27).map(p=>p.y));
   const faceH = Math.abs(chin.y - browY) || 1;
   const ratio = jawW/faceH;
-  const s = clamp((ratio - 0.30)/0.6, 0,1);
-  return Math.round(s*100);
+  return Math.round(clamp((ratio - 0.30)/0.6,0,1)*100);
 }
 function faceShape_methodB(landmarks, box){
   const browLeft = landmarks.positions[17], browRight = landmarks.positions[26];
-  const foreheadW = dist(browLeft,browRight) || 1;
-  const jawW = dist(landmarks.positions[0],landmarks.positions[16]) || 1;
-  const r = foreheadW / jawW;
-  const s = clamp(1 - Math.abs(r - 1)/0.8, 0,1);
-  return Math.round(s*100);
+  const foreheadW = dist(browLeft,browRight)||1;
+  const jawW = dist(landmarks.positions[0],landmarks.positions[16])||1;
+  return Math.round(clamp(1 - Math.abs((foreheadW/jawW) - 1)/0.8,0,1)*100);
 }
 function faceShape_methodC(landmarks, box){
   const cheekW = dist(landmarks.positions[1],landmarks.positions[15]) || 1;
   const faceW = (box && box.width) ? box.width : cheekW;
-  const s = clamp((cheekW/faceW - 0.28)/0.17,0,1);
-  return Math.round(s*100);
+  return Math.round(clamp((cheekW/faceW - 0.28)/0.17,0,1)*100);
 }
 function detectFaceShapeType(landmarks, box){
   const a = faceShape_methodA(landmarks,box), b = faceShape_methodB(landmarks,box), c = faceShape_methodC(landmarks,box);
@@ -872,29 +954,24 @@ function eyes_methodA(landmarks, box){
   const hL = (dist(left[1],left[5]) + dist(left[2],left[4]))/2 || 1;
   const hR = (dist(right[1],right[5]) + dist(right[2],right[4]))/2 || 1;
   const ratio = ((wL/hL) + (wR/hR))/2;
-  const s = clamp((ratio - 1.5)/2.0, 0,1);
-  return Math.round(s*100);
+  return Math.round(clamp((ratio - 1.5)/2.0,0,1)*100);
 }
 function eyes_methodB(landmarks, box){
   const leftOuter = landmarks.positions[36], rightOuter = landmarks.positions[45];
   const inter = dist(leftOuter, rightOuter);
   const faceW = (box && box.width) ? box.width : Math.abs(landmarks.positions[16].x - landmarks.positions[0].x) || 1;
-  const rel = inter/faceW;
-  const s = clamp(1 - Math.abs(rel - 0.32)/0.2,0,1);
-  return Math.round(s*100);
+  return Math.round(clamp(1 - Math.abs((inter/faceW) - 0.32)/0.2,0,1)*100);
 }
 function eyes_methodC(landmarks, box){
   const left = landmarks.getLeftEye(), right = landmarks.getRightEye();
   const openLeft = (dist(left[1],left[5]) + dist(left[2],left[4]))/2 / (dist(left[0],left[3])||1);
   const openRight = (dist(right[1],right[5]) + dist(right[2],right[4]))/2 / (dist(right[0],right[3])||1);
   const openAvg = (openLeft + openRight)/2;
-  const s = clamp((openAvg - 0.10)/0.5,0,1);
-  return Math.round(s*100);
+  return Math.round(clamp((openAvg - 0.10)/0.5,0,1)*100);
 }
-function detectEyeTypeMain(landmarks, box){
+function detectEyeType(landmarks, box){
   const a = eyes_methodA(landmarks,box), b = eyes_methodB(landmarks,box), c = eyes_methodC(landmarks,box);
   const avg = Math.round(mean([a,b,c]));
-  // derive type with simple heuristics:
   const ratioVal = (function(){ const left = landmarks.getLeftEye(), right = landmarks.getRightEye(); const r = ((dist(left[0],left[3])/( (dist(left[1],left[5])+dist(left[2],left[4]))/2 ||1 )) + (dist(right[0],right[3])/( (dist(right[1],right[5])+dist(right[2],right[4]))/2 ||1 )))/2; return r; })();
   const inter = dist(landmarks.getLeftEye()[3], landmarks.getRightEye()[0]);
   const faceW = (box && box.width) ? box.width : Math.abs(landmarks.positions[16].x - landmarks.positions[0].x) || 1;
@@ -907,192 +984,221 @@ function detectEyeTypeMain(landmarks, box){
   return {type:'Deep-set', base:avg};
 }
 
-// jaw/cheek/sym/ratio/skin/prop/chin functions are same as earlier scripts (kept concise here)
+// Jaw methods
 function jaw_methodA(landmarks, box){ const pts=landmarks.positions; const left=pts[0], right=pts[16], chin=pts[8]; const v1={x:left.x-chin.x,y:left.y-chin.y}, v2={x:right.x-chin.x,y:right.y-chin.y}; const dot=v1.x*v2.x+v1.y*v2.y; const na=Math.hypot(v1.x,v1.y), nb=Math.hypot(v2.x,v2.y)||1; const cos=clamp(dot/(na*nb),-1,1); const angle=Math.acos(cos)*180/Math.PI; return Math.round(clamp((140-angle)/60,0,1)*100); }
-function jaw_methodB(landmarks, box){ const left=landmarks.positions[0], right=landmarks.positions[16], chin=landmarks.positions[8]; const mid={x:(left.x+right.x)/2,y:(left.y+right.y)/2}; const proj = dist(chin,mid)/( (box && box.height) ? box.height : 1 ); return Math.round(clamp(proj/0.22,0,1)*100); }
+function jaw_methodB(landmarks, box){ const left=landmarks.positions[0], right=landmarks.positions[16], chin=landmarks.positions[8]; const mid={x:(left.x+right.x)/2,y:(left.y+right.y)/2}; const proj = dist(chin,mid)/( (box && box.height)?box.height:1 ); return Math.round(clamp(proj/0.22,0,1)*100); }
 function jaw_methodC(landmarks, box){ const jawW = dist(landmarks.positions[0],landmarks.positions[16])||1; const cheekW = dist(landmarks.positions[1],landmarks.positions[15])||1; const ratio = jawW/cheekW; return Math.round(clamp((ratio - 0.9)/0.5,0,1)*100); }
 function jaw_score(landmarks, box){ return Math.round(mean([jaw_methodA(landmarks,box), jaw_methodB(landmarks,box), jaw_methodC(landmarks,box)])); }
 
+// Cheek methods
 function cheek_methodA(landmarks, box){ const left=landmarks.positions[1], right=landmarks.positions[15]; const w=dist(left,right)/((box&&box.width)?box.width:1); return Math.round(clamp((w - 0.26)/0.2,0,1)*100); }
 function cheek_methodB(landmarks, box){ const cheekY=(landmarks.positions[1].y+landmarks.positions[15].y)/2; const chinY=landmarks.positions[8].y; const browY=mean(landmarks.positions.slice(19,24).map(p=>p.y)); const rel=(chinY-cheekY)/(chinY-browY||1); return Math.round(clamp(1-Math.abs(rel-0.5)/0.5,0,1)*100); }
 function cheek_methodC(landmarks, box){ const cheekW=dist(landmarks.positions[1],landmarks.positions[15]); const faceW=(box&&box.width)?box.width:cheekW; return Math.round(clamp((cheekW/faceW - 0.28)/0.17,0,1)*100); }
 function cheek_score(landmarks, box){ return Math.round(mean([cheek_methodA(landmarks,box),cheek_methodB(landmarks,box),cheek_methodC(landmarks,box)])); }
 
+// Symmetry
 function sym_methodA(landmarks, box){ const pts=landmarks.positions; const cx=(box && box.x !== undefined) ? box.x + box.width/2 : mean(pts.map(p=>p.x)); const pairs=[[36,45],[37,44],[38,43],[39,42],[40,41],[48,54],[49,53]]; const diffs=pairs.map(([l,r])=>Math.abs(Math.abs(pts[l].x-cx)-Math.abs(pts[r].x-cx))); const md=mean(diffs); const rel=md/((box&&box.width)?box.width:1); return Math.round(clamp(1-rel/0.08,0,1)*100); }
 function sym_methodB(landmarks, box){ const pts=landmarks.positions; const pairs=[[36,45],[37,44],[38,43],[39,42],[40,41]]; const diffs=pairs.map(([l,r])=>Math.abs(pts[l].y-pts[r].y)); const meanDiff=mean(diffs); const rel=meanDiff/((box&&box.height)?box.height:1); return Math.round(clamp(1-rel/0.08,0,1)*100); }
 function sym_methodC(landmarks, box){ const leftAvg=mean(landmarks.positions.slice(0,17).map(p=>p.x)); const rightAvg=mean(landmarks.positions.slice(17,27).map(p=>p.x)); const diff=Math.abs(leftAvg-rightAvg)/((box&&box.width)?box.width:1); return Math.round(clamp(1-diff/0.2,0,1)*100); }
 function sym_score(landmarks, box){ return Math.round(mean([sym_methodA(landmarks,box),sym_methodB(landmarks,box),sym_methodC(landmarks,box)])); }
 
+// Ratio
 function ratio_methodA(landmarks, box){ const browY=mean(landmarks.positions.slice(17,27).map(p=>p.y)); const chinY=landmarks.positions[8].y; const topY=Math.max(0, landmarks.positions[19].y - (landmarks.positions[24].y - landmarks.positions[19].y)*1.2); const faceH=Math.abs(chinY-topY)||1; const faceW=(dist(landmarks.positions[1],landmarks.positions[15])+dist(landmarks.positions[0],landmarks.positions[16]))/2||1; const ratio=faceW/faceH; const ideal=0.80; const diff=Math.abs(ratio-ideal); return Math.round(clamp(1-diff/0.5,0,1)*100); }
-function ratio_methodB(landmarks, box){ const browY=mean(landmarks.positions.slice(17,27).map(p=>p.y)); const noseY=landmarks.positions[30].y, chinY=landmarks.positions[8].y; const hairY=Math.max(0, landmarks.positions[19].y - (landmarks.positions[24].y - landmarks.positions[19].y)*1.4); const a=browY-hairY, b=noseY-browY, c=chinY-noseY; const total=a+b+c||1; const thirds=[a/total,b/total,c/total]; const dev=mean(thirds.map(t=>Math.abs(t-1/3))); return Math.round(clamp(1-dev*3,0,1)*100); }
+function ratio_methodB(landmarks, box){ const browY=mean(landmarks.positions.slice(17,27).map(p=>p.y)); const noseY=landmarks.positions[30].y, chinY=landmarks.positions[8].y; const hairY=Math.max(0, landmarks.positions[19].y - (landmarks.positions[24].y - landmarks.positions[19].y)*1.4); const a=browY-hairY,b=noseY-browY,c=chinY-noseY; const total=a+b+c||1; const thirds=[a/total,b/total,c/total]; const dev=mean(thirds.map(t=>Math.abs(t-1/3))); return Math.round(clamp(1-dev*3,0,1)*100); }
 function ratio_methodC(landmarks, box){ const w=(box&&box.width)?box.width:Math.abs(landmarks.positions[16].x-landmarks.positions[0].x); const h=(box&&box.height)?box.height:Math.abs(landmarks.positions[8].y - landmarks.positions[19].y) || 1; const r=w/h; const ideal=0.80; return Math.round(clamp(1-Math.abs(r-ideal)/0.8,0,1)*100); }
 function ratio_score(landmarks, box){ return Math.round(mean([ratio_methodA(landmarks,box),ratio_methodB(landmarks,box),ratio_methodC(landmarks,box)])); }
 
-function skin_methodA(ctx, scaledLandmarks, scaledBox){ try{ let minX=1e9,minY=1e9,maxX=0,maxY=0; scaledLandmarks.slice(0,17).forEach(p=>{ if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; }); const x=Math.floor(Math.max(0,minX)), y=Math.floor(Math.max(0,minY)); const w=Math.ceil(maxX-minX), h=Math.ceil(maxY-minY); if(w<4||h<4) return 60; const data=ctx.getImageData(x,y,w,h).data; const lum=[]; let skinLike=0, total=0; for(let i=0;i<data.length;i+=4){ const r=data[i], g=data[i+1], b=data[i+2]; const L=0.2126*r+0.7152*g+0.0722*b; lum.push(L); if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++; total++; } const meanL=mean(lum); const variance=lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/lum.length; const std=Math.sqrt(variance); const smooth=clamp(1-std/60,0,1); const prop=clamp(skinLike/total,0,1); return Math.round((smooth*0.7+prop*0.3)*100); }catch(e){ return 65; } }
-function skin_methodB(ctx, scaledLandmarks, scaledBox){ try{ const p=scaledLandmarks[8]; const cx=Math.round(Math.max(0,p.x - scaledBox.width*0.15)), cy=Math.round(Math.max(0,p.y - scaledBox.height*0.35)); const w=Math.min(Math.round(scaledBox.width*0.3), ctx.canvas.width - cx); const h=Math.min(Math.round(scaledBox.height*0.2), ctx.canvas.height - cy); if(w<4||h<4) return 70; const d=ctx.getImageData(cx,cy,w,h).data; const lum=[]; for(let i=0;i<d.length;i+=4) lum.push(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]); const std=Math.sqrt(lum.reduce((s,v)=>s+(v-mean(lum))*(v-mean(lum)),0)/lum.length); return Math.round(clamp(1-std/50,0,1)*100); }catch(e){ return 70; } }
+// Skin (canvas)
+function skin_methodA(ctx, scaledLandmarks, scaledBox){
+  try{
+    let minX=1e9,minY=1e9,maxX=0,maxY=0;
+    scaledLandmarks.slice(0,17).forEach(p=>{ if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; });
+    const x=Math.floor(Math.max(0,minX)), y=Math.floor(Math.max(0,minY));
+    const w=Math.ceil(maxX-minX), h=Math.ceil(maxY-minY);
+    if(w<4||h<4) return 60;
+    const data = ctx.getImageData(x,y,w,h).data;
+    const lum=[]; let skinLike=0,total=0;
+    for(let i=0;i<data.length;i+=4){
+      const r=data[i], g=data[i+1], b=data[i+2];
+      const L=0.2126*r + 0.7152*g + 0.0722*b; lum.push(L);
+      if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++;
+      total++;
+    }
+    const meanL=mean(lum); const variance=lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/lum.length; const std=Math.sqrt(variance);
+    const smooth=clamp(1-std/60,0,1); const prop=clamp(skinLike/total,0,1);
+    return Math.round((smooth*0.7 + prop*0.3)*100);
+  }catch(e){ return 65; }
+}
+function skin_methodB(ctx, scaledLandmarks, scaledBox){
+  try{
+    const p = scaledLandmarks[8];
+    const cx = Math.round(Math.max(0,p.x - scaledBox.width*0.15)), cy = Math.round(Math.max(0,p.y - scaledBox.height*0.35));
+    const w = Math.min( Math.round(scaledBox.width*0.3), ctx.canvas.width - cx);
+    const h = Math.min( Math.round(scaledBox.height*0.2), ctx.canvas.height - cy);
+    if(w<4||h<4) return 70;
+    const d = ctx.getImageData(cx,cy,w,h).data;
+    const lum=[]; for(let i=0;i<d.length;i+=4) lum.push(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]);
+    const std = Math.sqrt(lum.reduce((s,v)=>s+(v-mean(lum))*(v-mean(lum)),0)/lum.length);
+    return Math.round(clamp(1 - std/50,0,1)*100);
+  }catch(e){ return 70; }
+}
 function skin_methodC(){ return 60 + Math.round(Math.random()*35); }
 function skin_score(ctx, scaledLandmarks, scaledBox){ return Math.round(mean([skin_methodA(ctx, scaledLandmarks, scaledBox), skin_methodB(ctx, scaledLandmarks, scaledBox), skin_methodC()])); }
 
+// Proportions
 function prop_methodA(landmarks, box){ const eyeCenterY = mean(landmarks.getLeftEye().concat(landmarks.getRightEye()).map(p=>p.y)); const mouthY = landmarks.positions[57].y; const chinY = landmarks.positions[8].y; const d1 = mouthY-eyeCenterY, d2 = chinY-mouthY; const ratio = d1/(d1+d2||1); return Math.round(clamp(1-Math.abs(ratio-0.33)/0.5,0,1)*100); }
 function prop_methodB(landmarks, box){ const browY=mean(landmarks.positions.slice(17,27).map(p=>p.y)); const noseY=landmarks.positions[33].y; const chinY=landmarks.positions[8].y; const hairY=Math.max(0, landmarks.positions[19].y - (landmarks.positions[24].y - landmarks.positions[19].y)*1.2); const a=browY-hairY,b=noseY-browY,c=chinY-noseY; const total=a+b+c||1; const thirds=[a/total,b/total,c/total]; const dev=mean(thirds.map(t=>Math.abs(t-1/3))); return Math.round(clamp(1-dev*3,0,1)*100); }
 function prop_methodC(landmarks, box){ const leftW=dist(landmarks.positions[0],landmarks.positions[8]); const rightW=dist(landmarks.positions[16],landmarks.positions[8]); const rel=Math.abs(leftW-rightW)/(Math.max(leftW,rightW)||1); return Math.round(clamp(1-rel/0.3,0,1)*100); }
-function prop_score(landmarks, box){ return Math.round(mean([prop_methodA(landmarks,box), prop_methodB(landmarks,box), prop_methodC(landmarks,box)])); }
+function prop_score(landmarks,box){ return Math.round(mean([prop_methodA(landmarks,box), prop_methodB(landmarks,box), prop_methodC(landmarks,box)])); }
 
+// Chin
 function chin_methodA(landmarks,box){ const left=landmarks.positions[0], right=landmarks.positions[16], chin=landmarks.positions[8]; const mid={x:(left.x+right.x)/2,y:(left.y+right.y)/2}; return Math.round(clamp(dist(chin,mid)/((box&&box.height)?box.height:1)/0.25,0,1)*100); }
 function chin_methodB(landmarks,box){ const mouthY=landmarks.positions[57].y, chinY=landmarks.positions[8].y, faceH=(box&&box.height)?box.height:1; return Math.round(clamp((chinY-mouthY)/faceH/0.18,0,1)*100); }
-function chin_methodC(landmarks,box){ const pts=landmarks.positions; const left=pts[0], right=pts[16], chin=pts[8]; const v1={x:left.x-chin.x,y:left.y-chin.y}, v2={x:right.x-chin.x,y:right.y-chin.y}; const dot=v1.x*v2.x+v1.y*v2.y; const na=Math.hypot(v1.x,v1.y), nb=Math.hypot(v2.x,v2.y)||1; const cos=clamp(dot/(na*nb),-1,1); const jawAng=Math.acos(cos)*180/Math.PI; return Math.round(clamp((140-jawAng)/60,0,1)*100); }
+function chin_methodC(landmarks,box){ const pts=landmarks.positions; const left=pts[0], right=pts[16], chin=pts[8]; const v1={x:left.x-chin.x,y:left.y-chin.y}, v2={x:right.x-chin.x,y:right.y-chin.y}; const dot=v1.x*v2.x+v1.y*v2.y; const na=Math.hypot(v1.x,v1.y), nb=Math.hypot(v2.x,v2.y)||1; const cos=clamp(dot/(na*nb),-1,1); const ang=Math.acos(cos)*180/Math.PI; return Math.round(clamp((140-ang)/60,0,1)*100); }
 function chin_score(landmarks,box){ return Math.round(mean([chin_methodA(landmarks,box), chin_methodB(landmarks,box), chin_methodC(landmarks,box)])); }
 
-/* overall weights */
+// Overall weights (editable)
 const OVERALL_WEIGHTS = { jawline:0.18, cheekbones:0.12, faceShape:0.12, eyes:0.10, symmetry:0.15, skin:0.08, proportions:0.08, chin:0.07, ratio:0.10 };
-function computeOverall(scores){ let sum=0, total=0; for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0)*OVERALL_WEIGHTS[k]; total += OVERALL_WEIGHTS[k]; } return Math.round(sum/total); }
+function computeOverall(scores){ let sum=0, tot=0; for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0) * OVERALL_WEIGHTS[k]; tot += OVERALL_WEIGHTS[k]; } return Math.round(sum / tot); }
 
-/* ------------------ robust detection extraction ------------------ */
-function extractBoxAndLandmarks(detection){
-  // Try several structures that face-api might return across builds
-  if(!detection) return null;
-  // case: detection is result of withFaceLandmarks(): { detection: { box:... }, landmarks: {...} }
-  if(detection.detection && detection.detection.box && detection.landmarks) return { box: detection.detection.box, landmarks: detection.landmarks };
-  // case: detection.box + detection.landmarks directly
-  if(detection.box && detection.landmarks) return { box: detection.box, landmarks: detection.landmarks };
-  // case: vladmandic alignedRect
-  if(detection.alignedRect && detection.alignedRect.box && detection.landmarks) return { box: detection.alignedRect.box, landmarks: detection.landmarks };
-  // case: sometimes landmarks under 'detection' child
-  if(detection.landmarks && detection.landmarks.positions) return { box: detection.detection ? detection.detection.box : (detection.box||null), landmarks: detection.landmarks };
-  return null;
-}
-
-/* ---------------- main analyze flow ---------------- */
+// ---------------- main analyze flow ----------------
 async function analyzeFile(file){
   if(!modelsLoaded){ statusEl.textContent = 'Modele jeszcze się ładują...'; return; }
-  if(!file || !file.type.startsWith('image/')){ statusEl.textContent = 'Wybierz plik obrazkowy (jpg/png/webp).'; return; }
+  if(!file || !file.type.startsWith('image/')){ statusEl.textContent = 'Wybierz plik graficzny.'; return; }
 
-  statusEl.textContent = 'Przygotowanie obrazu...';
-  const url = URL.createObjectURL(file);
-  preview.src = url; preview.style.display = 'block';
-  fileInput.style.display = 'none'; changeBtn.style.display = 'inline-block';
+  statusEl.textContent = 'Przygotowanie zdjęcia...';
+  const img = await faceapi.bufferToImage(file);
+  preview.src = img.src; preview.style.display = 'block';
+  fileLabel.style.display = 'none';
   resultsEl.innerHTML = '';
+  changeBtn.style.display = 'inline-block';
 
-  try {
-    const img = await faceapi.bufferToImage(file);
-    await img.decode();
+  // canvas for skin sampling
+  const MAX = 1200;
+  let w = img.width, h = img.height;
+  if(Math.max(w,h) > MAX){ const sc=MAX/Math.max(w,h); w=Math.round(w*sc); h=Math.round(h*sc); }
+  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
 
-    // canvas for skin sampling
-    const MAX = 1400;
-    let w = img.width, h = img.height;
-    if(Math.max(w,h) > MAX){ const sc = MAX / Math.max(w,h); w = Math.round(w*sc); h = Math.round(h*sc); }
-    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+  statusEl.textContent = 'Wykrywanie twarzy i landmarków...';
+  const options = new faceapi.TinyFaceDetectorOptions({ inputSize:512, scoreThreshold:0.35 });
+  let detection = await faceapi.detectSingleFace(img, options).withFaceLandmarks();
 
-    statusEl.textContent = 'Wykrywanie twarzy i landmarków...';
-    const options = new faceapi.TinyFaceDetectorOptions({ inputSize:512, scoreThreshold:0.35 });
-    let detection = await faceapi.detectSingleFace(img, options).withFaceLandmarks();
-
-    // If detection undefined, try a fallback 2-step approach
-    if(!detection){
-      // try detect face rect first then landmarks separately
-      const detRect = await faceapi.detectSingleFace(img, options);
-      if(detRect){
-        const landmarks = await faceapi.detectLandmarks(img); // some builds expose this; may fail — handle below
+  // fallback attempt: try detect face then landmarks separately for some builds
+  if(!detection){
+    const detRect = await faceapi.detectSingleFace(img, options);
+    if(detRect){
+      try{
+        const landmarks = await faceapi.detectLandmarks(img);
         detection = detRect;
         if(landmarks) detection.landmarks = landmarks;
-      }
-    }
-
-    const extracted = extractBoxAndLandmarks(detection);
-    if(!extracted || !extracted.box || !extracted.landmarks || !extracted.landmarks.positions){
-      statusEl.textContent = 'Nie wykryto poprawnie twarzy/landmarków — spróbuj innego, frontalnego zdjęcia (lepsze oświetlenie).';
-      return;
-    }
-
-    const box = extracted.box;
-    const landmarks = extracted.landmarks;
-
-    // scaled landmarks for canvas-based skin sampling
-    const scaleX = w / img.width, scaleY = h / img.height;
-    const scaledPositions = landmarks.positions.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
-    const scaledBox = { x: (box.x||0) * scaleX, y: (box.y||0) * scaleY, width: (box.width|| (Math.abs(landmarks.positions[16].x - landmarks.positions[0].x))) * scaleX, height: (box.height || Math.abs(landmarks.positions[8].y - landmarks.positions[19].y)) * scaleY };
-
-    statusEl.textContent = 'Obliczanie metryk (3 metod) — krok 1/3...';
-
-    // compute scores (each averaged from 3 methods)
-    const scores = {};
-    const faceType = detectFaceShapeType(landmarks, box);
-    scores.faceShape = Math.round(mean([faceShape_methodA(landmarks,box), faceShape_methodB(landmarks,box), faceShape_methodC(landmarks,box)]));
-
-    statusEl.textContent = 'Obliczanie metryk (3 metod) — krok 2/3...';
-    scores.jawline = jaw_score(landmarks, box);
-    scores.cheekbones = cheek_score(landmarks, box);
-    const eyeType = detectEyeTypeMain(landmarks, box);
-    scores.eyes = Math.round(mean([eyes_methodA(landmarks,box), eyes_methodB(landmarks,box), eyes_methodC(landmarks,box)]));
-
-    statusEl.textContent = 'Obliczanie metryk (3 metod) — krok 3/3...';
-    scores.symmetry = sym_score(landmarks, box);
-    scores.skin = skin_score(ctx, scaledPositions, scaledBox);
-    scores.proportions = prop_score(landmarks, box);
-    scores.chin = chin_score(landmarks, box);
-    scores.ratio = ratio_score(landmarks, box);
-
-    // clamp 0..100
-    for(const k in scores) scores[k] = clamp(Math.round(scores[k]), 0, 100);
-
-    const overall = computeOverall(scores);
-
-    // render results
-    resultsEl.innerHTML = '';
-    const order = [
-      {k:'faceShape', label:`Face Shape (${faceType.type})`, val:scores.faceShape || 0},
-      {k:'eyes', label:`Eyes (${eyeType.type})`, val:scores.eyes || 0},
-      {k:'jawline', label:'Jawline', val:scores.jawline || 0},
-      {k:'cheekbones', label:'Cheekbones', val:scores.cheekbones || 0},
-      {k:'symmetry', label:'Symmetry', val:scores.symmetry || 0},
-      {k:'skin', label:'Skin Quality', val:scores.skin || 0},
-      {k:'proportions', label:'Proportions', val:scores.proportions || 0},
-      {k:'chin', label:'Chin Ratio', val:scores.chin || 0},
-      {k:'ratio', label:'Face Ratio', val:scores.ratio || 0},
-      {k:'overall', label:'Overall', val:overall}
-    ];
-    order.forEach(item => resultsEl.appendChild(makeCard(item.label, item.val)));
-
-    statusEl.textContent = 'Analiza zakończona ✅';
-  } catch(err){
-    console.error('Analyze error:', err);
-    // if a property was missing earlier, give a friendly message
-    if(err && err.message && err.message.includes('width')){
-      statusEl.textContent = "Błąd analizy: nieprawidłowe dane z detekcji (brak box). Spróbuj innego zdjęcia.";
-    } else {
-      statusEl.textContent = 'Błąd podczas analizy: ' + (err.message || err);
+      }catch(e){ /* ignore */ }
     }
   }
+
+  if(!detection){
+    statusEl.textContent = 'Nie wykryto twarzy — spróbuj frontalnego zdjęcia (bez filtrów).';
+    fileLabel.style.display = 'block';
+    return;
+  }
+
+  // safe extract
+  const box = (detection.detection && detection.detection.box) ? detection.detection.box : (detection.box || (detection.alignedRect && detection.alignedRect.box) || null);
+  const landmarks = detection.landmarks;
+  if(!landmarks || !landmarks.positions || !box){
+    statusEl.textContent = 'Nie znaleziono kompletnej detekcji (box/landmarks). Spróbuj innego zdjęcia.';
+    fileLabel.style.display = 'block';
+    return;
+  }
+
+  // scale landmarks for canvas sampling
+  const scaleX = w / img.width, scaleY = h / img.height;
+  const scaled = landmarks.positions.map(p=>({ x:p.x*scaleX, y:p.y*scaleY }));
+  const scaledBox = { x:(box.x||0)*scaleX, y:(box.y||0)*scaleY, width:(box.width||Math.abs(landmarks.positions[16].x - landmarks.positions[0].x))*scaleX, height:(box.height||Math.abs(landmarks.positions[8].y - landmarks.positions[19].y))*scaleY };
+
+  statusEl.textContent = 'Obliczanie metryk (3 metody)...';
+
+  // compute category scores (avg of 3)
+  const scores = {};
+  const faceType = detectFaceShapeType(landmarks, box);
+  scores.faceShape = Math.round(mean([ faceShape_methodA(landmarks,box), faceShape_methodB(landmarks,box), faceShape_methodC(landmarks,box) ]));
+
+  scores.jawline = jaw_score(landmarks, box);
+  scores.cheekbones = cheek_score(landmarks, box);
+
+  const eyeType = detectEyeType(landmarks, box);
+  scores.eyes = Math.round(mean([ eyes_methodA(landmarks,box), eyes_methodB(landmarks,box), eyes_methodC(landmarks,box) ]));
+
+  scores.symmetry = sym_score(landmarks, box);
+
+  scores.skin = skin_score(ctx, scaled, scaledBox);
+
+  scores.proportions = prop_score(landmarks, box);
+  scores.chin = chin_score(landmarks, box);
+  scores.ratio = ratio_score(landmarks, box);
+
+  // clamp 0..100
+  for(const k in scores) scores[k] = clamp(Math.round(scores[k]), 0, 100);
+
+  const overall = computeOverall(scores);
+
+  // render metrics: labels above circles (mobile-friendly)
+  resultsEl.innerHTML = '';
+  const order = [
+    {k:'faceShape', label:`Face Shape (${faceType.type})`, val:scores.faceShape||0},
+    {k:'eyes', label:`Eyes (${eyeType.type})`, val:scores.eyes||0},
+    {k:'jawline', label:'Jawline', val:scores.jawline||0},
+    {k:'cheekbones', label:'Cheekbones', val:scores.cheekbones||0},
+    {k:'symmetry', label:'Symmetry', val:scores.symmetry||0},
+    {k:'skin', label:'Skin Quality', val:scores.skin||0},
+    {k:'proportions', label:'Proportions', val:scores.proportions||0},
+    {k:'chin', label:'Chin Ratio', val:scores.chin||0},
+    {k:'ratio', label:'Face Ratio', val:scores.ratio||0},
+    {k:'overall', label:'Overall', val:overall}
+  ];
+
+  order.forEach(item=>{
+    const node = makeMetric(item.label, item.val);
+    resultsEl.appendChild(node);
+  });
+
+  statusEl.textContent = 'Analiza zakończona ✅';
 }
 
-/* --- events --- */
-fileInput.addEventListener('change', async (e) => {
+// ----------------- events -----------------
+fileLabel.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', async (e)=>{
   const f = e.target.files && e.target.files[0];
-  if(!f){ statusEl.textContent = 'Nie wybrano pliku.'; return; }
-  if(!f.type.startsWith('image/')){ statusEl.textContent = 'Wybierz plik obrazkowy (jpg/png/webp).'; return; }
-  if(!modelsLoaded){ statusEl.textContent = 'Modele jeszcze się ładują...'; return; }
-  statusEl.textContent = 'Analiza rozpoczyna się...';
+  if(!f) return;
   await analyzeFile(f);
 });
 
 changeBtn.addEventListener('click', ()=>{
   preview.src=''; preview.style.display='none';
-  fileInput.value=''; fileInput.style.display='inline-block';
-  changeBtn.style.display='none'; resultsEl.innerHTML=''; statusEl.textContent='Wybierz zdjęcie.';
+  fileInput.value=''; fileInput.style.display='block';
+  fileLabel.style.display='block';
+  changeBtn.style.display='none';
+  resultsEl.innerHTML='';
+  statusEl.textContent = 'Wybierz zdjęcie.';
 });
 
-// fallback watcher to set modelsLoaded if loader succeeded but flag missed
-(function watchModels(){
+// small fallback: if models loaded quietly set flag
+(function watchLoaded(){
   const iv = setInterval(()=>{
     if(faceapi && faceapi.nets && faceapi.nets.tinyFaceDetector && faceapi.nets.faceLandmark68Net && faceapi.nets.tinyFaceDetector.params){
-      modelsLoaded = true; clearInterval(iv);
+      modelsLoaded = true;
+      clearInterval(iv);
+      // if loader didn't update status (rare), set it
+      if(statusEl.textContent && statusEl.textContent.includes('Inicjalizacja')) {
+        statusEl.textContent = '✅ Modele gotowe. Wybierz zdjęcie.';
+      }
     }
-  },500);
+  },600);
 })();
-  </script>
+</script>
 </body>
 </html>
+
 
 
 
