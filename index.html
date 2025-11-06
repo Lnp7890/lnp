@@ -660,731 +660,850 @@ Odwrócił się powoli i wrócił do biurka. Na stole parowała kawa, a on wzią
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Face Analyzer — Real FaceMesh (3-methods)</title>
+<title>Face Analyzer - by Lnp7890</title>
 <style>
 :root{
-  --bg:#0a0303;
-  --card:#180606;
+  --bg:#070203;
+  --panel:#170404;
+  --card:#1a0606;
   --accent1:#ff3b2f;
   --accent2:#ff8a6b;
   --muted:#d6c6c3;
+  --glass: rgba(255,255,255,0.03);
   --radius:14px;
 }
 *{box-sizing:border-box}
-body{margin:0; font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,#0a0303,#040101); color:#fff; padding:18px; display:flex; justify-content:center;}
-.wrapper{width:100%; max-width:980px;}
-.card{background:rgba(255,255,255,0.02); border-radius:var(--radius); padding:14px; box-shadow:0 18px 60px rgba(0,0,0,0.6);}
-.header{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;}
-.title{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; color:transparent;}
-.subtitle{color:var(--muted); font-size:13px;}
-.stack{display:flex; flex-direction:column; gap:12px;}
-.preview{background:linear-gradient(180deg,#220606,#120303); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:10px;}
-#previewImg{max-width:100%; border-radius:10px; object-fit:contain; display:none; box-shadow:0 8px 30px rgba(0,0,0,0.6);}
-.controls{display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap;}
-.file-btn{padding:10px 12px; border-radius:10px; border:1px dashed rgba(255,255,255,0.06); color:var(--muted); background:transparent; cursor:pointer;}
-.btn{padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; color:#200503; background:linear-gradient(90deg,var(--accent2),var(--accent1));}
-.small{font-size:12px; color:var(--muted);}
-.progress{height:10px; width:100%; background:rgba(255,255,255,0.02); border-radius:999px; overflow:hidden;}
-.progress > i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent2)); transition:width 400ms ease;}
-.results{display:flex; flex-direction:column; gap:12px; width:100%;}
-.results-grid{display:grid; grid-template-columns: 1fr; gap:8px;} /* vertical stacked cards */
-.result-row{display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.01); padding:10px; border-radius:10px;}
-.ring{width:84px; height:84px; border-radius:50%; background:#0d0706; display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 8px 30px rgba(0,0,0,0.45);}
-.value{font-weight:900; font-size:18px; color:#fff;}
-.label{font-size:14px; color:var(--muted); font-weight:700;}
-.meta{font-size:12px; color:var(--muted);}
-@media (max-width:700px){
-  .result-row{flex-direction:row; gap:8px;}
-  .ring{width:68px; height:68px;}
-  .value{font-size:16px;}
+html,body{height:100%}
+body{
+  margin:0; padding:20px; font-family:Inter,system-ui,Arial;
+  background: linear-gradient(180deg,#040101 0%, #120307 60%);
+  color:#fff; display:flex; flex-direction:column; align-items:center;
+}
+
+/* Force vertical stacking under #automat */
+#automat { width:100%; max-width:980px; margin-bottom:28px; }
+
+/* Container */
+.container{ width:100%; max-width:980px; background:var(--panel); border-radius:var(--radius); padding:16px; box-shadow:0 18px 60px rgba(0,0,0,0.6); }
+.header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.title{ font-weight:900; font-size:18px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; color:transparent; }
+.subtitle{ font-size:13px; color:var(--muted); }
+
+/* Preview */
+.preview{ background: linear-gradient(180deg,#260606,#120304); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px; align-items:center; }
+#previewImg{ max-width:100%; border-radius:10px; object-fit:contain; display:none; box-shadow:0 8px 30px rgba(0,0,0,0.6); }
+
+/* Controls */
+.controls{ display:flex; gap:8px; align-items:center; width:100%; flex-wrap:wrap; }
+.file-btn{ padding:10px 12px; border-radius:10px; border:1px dashed rgba(255,255,255,0.06); color:var(--muted); background:transparent; cursor:pointer; }
+.btn{ padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:800; color:#200503; background:linear-gradient(90deg,var(--accent2),var(--accent1)); }
+.small{ font-size:12px; color:var(--muted); }
+
+/* progress */
+.progress { height:10px; width:100%; background:rgba(255,255,255,0.02); border-radius:999px; overflow:hidden; margin-top:6px; }
+.progress > i { display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent2)); transition:width 350ms ease; }
+
+/* Results vertical */
+.results-grid{ margin-top:12px; display:flex; flex-direction:column; gap:10px; width:100%; }
+.result-row{ display:flex; gap:12px; align-items:center; background:var(--glass); padding:10px; border-radius:10px; min-height:84px; position:relative; }
+.ring{ width:86px; height:86px; border-radius:50%; background:#0d0706; display:flex; align-items:center; justify-content:center; position:relative; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+.value{ font-weight:900; font-size:20px; color:#fff; text-shadow:0 1px 0 rgba(0,0,0,0.6); }
+.label{ font-size:15px; color:var(--muted); font-weight:800; }
+.sub{ font-size:12px; color:var(--muted); }
+
+/* suggestion bubble (on the right of each row) */
+.suggestions{ position:absolute; right:12px; top:12px; max-width:42%; background:rgba(0,0,0,0.35); padding:8px 10px; border-radius:8px; color:var(--muted); font-size:12px; }
+.suggestion-item{ margin-bottom:6px; }
+.suggestion-item:last-child{ margin-bottom:0; }
+
+/* save report area */
+.save-area{ display:flex; gap:8px; margin-top:12px; align-items:center; }
+
+/* small screens */
+@media (max-width:720px){
+  .result-row{ padding:8px; gap:8px; }
+  .ring{ width:68px; height:68px; }
+  .value{ font-size:16px; }
+  .suggestions{ position:static; max-width:100%; margin-top:8px; }
+  .results-grid{ gap:8px; }
+  .save-area{ flex-direction:column; align-items:stretch; }
 }
 </style>
 </head>
 <body>
-  <div class="wrapper" id="fa-wrapper">
-    <div class="card" id="fa-card">
-      <div class="header">
-        <div>
-          <div class="title">Face Analyzer — by Lnp7890</div>
-          <div class="subtitle">Dokładna analiza 3-metodowa • 7 typów oczu • 7 kształtów twarzy</div>
+  <!-- If your automat exists elsewhere give it id="automat". This script will insert analyzer under it. -->
+  <div id="automat" style="display:none"></div>
+
+  <div class="container" id="face-analyzer-container" aria-live="polite">
+    <div class="header">
+      <div>
+        <div class="title">Face Analyzer - by Lnp7890</div>
+        <div class="subtitle">Zachowano: 3× metody · 7 eye types · 7 face shapes · ważony overall</div>
+      </div>
+      <div id="status" class="subtitle">Rozpoczynam inicjalizację modeli...</div>
+    </div>
+
+    <div class="preview">
+      <img id="previewImg" alt="Podgląd zdjęcia"/>
+      <div id="hint" class="small">Wybierz zdjęcie JPG/PNG/WebP — analiza zacznie się po wykryciu twarzy</div>
+
+      <div class="controls">
+        <label class="file-btn" id="uploadLabel">Wybierz zdjęcie
+          <input id="fileInput" type="file" accept="image/*" style="display:none" />
+        </label>
+        <button id="changeBtn" class="btn" style="display:none">Zmień zdjęcie</button>
+        <div style="flex:1">
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-bottom:6px;">
+            <div id="loaderText">Ładowanie modeli</div><div id="countdown">20s</div>
+          </div>
+          <div class="progress"><i id="progFill"></i></div>
         </div>
-        <div id="statusText" class="subtitle">Inicjalizacja modeli...</div>
       </div>
 
-      <div class="stack">
-        <div class="preview" id="previewPanel">
-          <img id="previewImg" alt="Podgląd zdjęcia"/>
-          <div id="hint" class="small">Wybierz zdjęcie JPG/PNG/WebP — analiza rozpocznie się automatycznie</div>
+      <div id="modeNote" class="small" style="margin-top:6px">Tryb: oczekiwanie na modele...</div>
 
-          <div class="controls" style="width:100%; justify-content:flex-start;">
-            <label class="file-btn" id="uploadLabel">Wybierz zdjęcie
-              <input id="fileInput" type="file" accept="image/*" style="display:none">
-            </label>
-            <button id="changeBtn" class="btn" style="display:none">Zmień zdjęcie</button>
-            <div style="flex:1">
-              <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-bottom:6px;">
-                <div>Ładowanie modeli</div><div id="countdown">20s</div>
-              </div>
-              <div class="progress"><i id="progressFill"></i></div>
-            </div>
-          </div>
-        </div>
+      <div id="resultsGrid" class="results-grid" role="region" aria-live="polite"></div>
 
-        <div class="results" id="resultsSection">
-          <div class="meta small" id="modeNote">Tryb: oczekiwanie na modele...</div>
-          <div id="resultsGrid" class="results-grid" role="region" aria-live="polite"></div>
-        </div>
+      <div class="save-area">
+        <button id="saveReportBtn" class="btn">💾 Zapisz raport</button>
+        <div id="savedNotice" class="small" style="color:var(--muted)"></div>
+      </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="small">7 eye types: Hunter, Almond, Hooded, Monolid, Downturned, Upturned, Wide-set</div>
-          <div class="small" id="footerMsg">—</div>
-        </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div class="small">Eye types: Hunter, Almond, Hooded, Monolid, Downturned, Upturned, Wide-set</div>
+        <div class="small" id="footerMsg">FaceShapes: Diamond, Oval, Round, Square, Heart, Triangle, Rectangle</div>
       </div>
     </div>
   </div>
 
 <script>
-/*
-Full FaceMesh-based analyzer
-- loads TF.js + face-landmarks-detection (MediaPipe FaceMesh)
-- 3-methods per category (geometry / symmetry / golden-ratio-ish)
-- mapping to 7 eye types & 7 face shapes
-- inserts panel under #automat (if exists) to ensure vertical stacking
-- fallback offline heuristics if online models fail
+/* Final integrated script:
+   - loader: tf -> blazeface -> facemesh (retry, timeout, countdown, progress)
+   - BlazeFace detection first (no face => "Nie wykryto twarzy")
+   - 3-method scoring for each metric (jawline, faceShape, eyes, cheekbones, symmetry, skin, proportions, chin, ratio)
+   - suggestions: up to 10 per category (natural language), verify by predicate, re-evaluate metric if predicate false
+   - export report (JSON/TXT)
+   - vertical layout under #automat
 */
 
-(async function(){
-  // ---------- Elements ----------
-  const wrapper = document.getElementById('fa-wrapper');
-  const statusText = document.getElementById('statusText');
-  const uploadLabel = document.getElementById('uploadLabel');
-  const fileInput = document.getElementById('fileInput');
-  const previewImg = document.getElementById('previewImg');
-  const changeBtn = document.getElementById('changeBtn');
-  const countdownEl = document.getElementById('countdown');
-  const progressFill = document.getElementById('progressFill');
-  const resultsGrid = document.getElementById('resultsGrid');
-  const modeNote = document.getElementById('modeNote');
-  const footerMsg = document.getElementById('footerMsg');
-  const hint = document.getElementById('hint');
+/* ---------- Utilities ---------- */
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const mean = arr => arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : 0;
+const dist = (a,b) => {
+  if(!a||!b) return 0;
+  const ax = a[0] ?? a.x, ay = a[1] ?? a.y;
+  const bx = b[0] ?? b.x, by = b[1] ?? b.y;
+  return Math.hypot(ax-bx, ay-by);
+};
 
-  // ---------- State ----------
-  let meshModel = null;
-  let ONLINE = false;
-  let READY = false;
-  let countdown = 20;
-  let countdownIv = null;
-  let loadAttempts = 0;
-  const MAX_ATTEMPTS = 4;
-  let lastResults = null;
+/* ---------- DOM ---------- */
+const statusEl = document.getElementById('status');
+const loaderText = document.getElementById('loaderText');
+const uploadLabel = document.getElementById('uploadLabel');
+const fileInput = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const changeBtn = document.getElementById('changeBtn');
+const countdownEl = document.getElementById('countdown');
+const progFill = document.getElementById('progFill');
+const resultsGrid = document.getElementById('resultsGrid');
+const modeNote = document.getElementById('modeNote');
+const hint = document.getElementById('hint');
+const footerMsg = document.getElementById('footerMsg');
+const saveReportBtn = document.getElementById('saveReportBtn');
+const savedNotice = document.getElementById('savedNotice');
 
-  // ---------- UI helpers ----------
-  function setProgress(p){ progressFill.style.width = Math.max(0, Math.min(100, p)) + '%'; }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-  function mean(arr){ return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : 0; }
-  function dist(a,b){ if(!a||!b) return 0; return Math.hypot(a[0]-b[0], a[1]-b[1]); }
-  function animateRing(el, value){
-    return new Promise(res=>{
-      const target = clamp(Math.round(value),0,100);
-      const vEl = el.querySelector('.value');
-      const start = performance.now();
-      const dur = 700;
-      (function frame(now){
-        const t = clamp((now - start)/dur,0,1);
-        const eased = 1 - Math.pow(1 - t, 3);
-        const cur = Math.round(target * eased);
-        el.style.background = `conic-gradient(${getComputedStyle(document.documentElement).getPropertyValue('--accent1') || '#ff3b2f'} ${cur*3.6}deg, rgba(0,0,0,0.45) ${cur*3.6}deg)`;
-        if(vEl) vEl.textContent = cur;
-        if(t<1) requestAnimationFrame(frame); else res();
-      })(start);
-    });
-  }
-  function createRow(label, subtitle, value){
-    const row = document.createElement('div'); row.className='result-row';
-    const ring = document.createElement('div'); ring.className='ring';
-    const v = document.createElement('div'); v.className='value'; v.textContent='0';
-    ring.appendChild(v);
-    const text = document.createElement('div'); text.style.flex='1';
-    const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = label;
-    const sub = document.createElement('div'); sub.className='small'; sub.textContent = subtitle || '';
-    text.appendChild(lbl); text.appendChild(sub);
-    row.appendChild(ring); row.appendChild(text);
-    return { row, ring, v };
-  }
+let blazefaceModel = null;
+let meshModel = null;
+let READY = false;
+let ONLINE = false;
+let countdown = 20;
 
-  // ---------- Insert under #automat if present (to guarantee vertical stack) ----------
-  (function placeUnderAutomat(){
-    const triesMax = 12;
-    let tries = 0;
-    const iv = setInterval(()=>{
-      tries++;
-      const automat = document.getElementById('automat');
-      if(automat){
-        automat.insertAdjacentElement('afterend', wrapper);
-        clearInterval(iv);
-      } else if(tries >= triesMax){
-        // if not found, just keep wrapper where it is
-        clearInterval(iv);
-      }
-    }, 600);
-  })();
+/* data to export later */
+let analysisResults = null;             // simple mapping key->value
+let improvementSuggestions = {};       // category -> array of confirmed suggestions
+let rawSuggestionCandidates = {};      // category -> array of candidates (unconfirmed)
 
-  // ---------- Load TF & FaceMesh with retry ----------
-  async function loadScript(src, timeout=9000){
-    return new Promise((res, rej)=>{
-      const s = document.createElement('script'); s.src = src; s.async = true;
-      let done = false;
-      const to = setTimeout(()=>{ if(!done){ done=true; s.remove(); rej(new Error('timeout')); } }, timeout);
-      s.onload = ()=>{ if(done) return; done = true; clearTimeout(to); res(); };
-      s.onerror = (e)=>{ if(done) return; done=true; clearTimeout(to); rej(e); };
-      document.head.appendChild(s);
-    });
-  }
+/* place analyzer under automat (vertical) */
+(function placeUnderAutomat(){
+  const triesMax = 20; let tries=0;
+  const iv = setInterval(()=>{
+    tries++;
+    const automat = document.getElementById('automat');
+    const container = document.getElementById('face-analyzer-container');
+    if(automat && container){ automat.insertAdjacentElement('afterend', container); clearInterval(iv); }
+    if(tries>=triesMax) clearInterval(iv);
+  },400);
+})();
 
-  async function attemptLoad(attempts=3){
-    for(let i=1;i<=attempts;i++){
-      loadAttempts = i;
-      statusText.textContent = `Ładowanie modeli online (próba ${i}/${attempts})...`;
-      setProgress(10 + (i-1)*30);
-      try{
-        // quick fetch check
-        await fetch('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', { method:'HEAD', mode:'no-cors' }).catch(()=>{}); // best-effort
-        if(typeof tf === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', 8000);
-        setProgress(35);
-        if(typeof faceLandmarksDetection === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.3/dist/face-landmarks-detection.min.js', 9000);
-        setProgress(60);
-        // backend
-        try{ await tf.setBackend('webgl'); }catch(e){ try{ await tf.setBackend('cpu'); }catch(_){} }
-        await tf.ready();
-        meshModel = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, { maxFaces:1 });
-        setProgress(100);
-        statusText.textContent = 'Modele online załadowane ✅';
-        modeNote.textContent = 'Tryb: ONLINE (FaceMesh)';
-        ONLINE = true; READY = true;
-        return true;
-      } catch(err){
-        console.warn('load attempt failed', err);
-        statusText.textContent = `Błąd ładowania online (próba ${i}) — ${err.message || ''}`;
-        setProgress(Math.min(85, 10 + i*20));
-        await new Promise(r=>setTimeout(r, 1200 + i*600));
-      }
+function setProgress(p){ progFill.style.width = clamp(p,0,100) + '%'; }
+
+/* animate ring for display */
+function animateRing(el, value){
+  return new Promise(res=>{
+    const target = clamp(Math.round(value),0,100);
+    const valEl = el.querySelector('.value');
+    const start = performance.now(); const dur = 700;
+    function frame(now){
+      const t = clamp((now-start)/dur,0,1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const cur = Math.round(target * eased);
+      el.style.background = `conic-gradient(#ff3b2f ${cur*3.6}deg, rgba(0,0,0,0.45) ${cur*3.6}deg)`;
+      if(valEl) valEl.textContent = cur;
+      if(t < 1) requestAnimationFrame(frame); else res();
     }
-    // fallback offline
-    statusText.textContent = 'Przełączono na tryb OFFLINE (heurystyki).';
-    modeNote.textContent = 'Tryb: OFFLINE (mniej dokładny)';
-    ONLINE = false; READY = true;
-    setProgress(15);
-    return false;
-  }
+    requestAnimationFrame(frame);
+  });
+}
+function createRow(label, subtitle){
+  const row = document.createElement('div'); row.className='result-row';
+  const ring = document.createElement('div'); ring.className='ring';
+  const v = document.createElement('div'); v.className='value'; v.textContent='0';
+  ring.appendChild(v);
+  const text = document.createElement('div'); text.style.flex='1';
+  const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent=label;
+  const sub = document.createElement('div'); sub.className='sub'; sub.textContent=subtitle||'';
+  text.appendChild(lbl); text.appendChild(sub);
+  row.appendChild(ring); row.appendChild(text);
+  return { row, ring, v, text, labelEl: lbl };
+}
 
-  // countdown and attempt immediate load
+/* ---------- Load scripts with retries & timeout ---------- */
+async function loadScript(src, timeout=9000){
+  return new Promise((res, rej)=>{
+    const s = document.createElement('script'); s.src = src; s.async = true;
+    let done=false;
+    const to = setTimeout(()=>{ if(!done){ done=true; s.remove(); rej(new Error('timeout')); } }, timeout);
+    s.onload = ()=>{ if(done) return; done=true; clearTimeout(to); res(); };
+    s.onerror = (e)=>{ if(done) return; done=true; clearTimeout(to); rej(e); };
+    document.head.appendChild(s);
+  });
+}
+
+async function attemptLoadAll(attempts=3){
+  for(let i=1;i<=attempts;i++){
+    statusEl.textContent = `Ładowanie modeli online (próba ${i}/${attempts})...`;
+    setProgress(10 + (i-1)*30);
+    try{
+      if(typeof tf === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js', 9000);
+      setProgress(30);
+      if(typeof blazeface === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js', 9000);
+      setProgress(55);
+      if(typeof faceLandmarksDetection === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.3/dist/face-landmarks-detection.min.js', 9000);
+      setProgress(75);
+      try{ await tf.setBackend('webgl'); }catch(e){ try{ await tf.setBackend('cpu'); }catch(_){} }
+      await tf.ready();
+      blazefaceModel = await blazeface.load();
+      setProgress(88);
+      meshModel = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, { maxFaces:1 });
+      setProgress(100);
+      statusEl.textContent = 'Modele załadowane ✅';
+      modeNote.textContent = 'Tryb: ONLINE (BlazeFace + FaceMesh)';
+      ONLINE = true; READY = true;
+      return true;
+    } catch(err){
+      console.warn('load attempt failed', err);
+      statusEl.textContent = `Błąd ładowania (próba ${i}) — ${err.message||''}`;
+      setProgress(Math.min(85, 10 + i*20));
+      await new Promise(r=>setTimeout(r, 1000 + i*600));
+    }
+  }
+  statusEl.textContent = 'Nie udało się załadować modeli — tryb OFFLINE.';
+  modeNote.textContent = 'Tryb: OFFLINE (heurystyki)';
+  READY = true; ONLINE = false;
+  setProgress(15);
+  return false;
+}
+
+/* start countdown + initial load */
+countdownEl.textContent = countdown + 's';
+const cdIv = setInterval(()=>{
+  countdown--;
   countdownEl.textContent = countdown + 's';
-  countdownIv = setInterval(()=>{
-    countdown--;
-    countdownEl.textContent = countdown + 's';
-    setProgress((20 - countdown)/20 * 35 + 5);
-    if(countdown <= 0){
-      clearInterval(countdownIv);
-      attemptLoad(MAX_ATTEMPTS);
-    }
-  }, 1000);
-  // immediate attempt
-  attemptLoad(MAX_ATTEMPTS).catch(()=>{ /* handled */ });
-
-  // ---------- Analysis helpers (3-methods per category) ----------
-  // FaceMesh annotations structure: scaledMesh (array), annotations {leftEye:[], rightEye:[], leftCheek:[], rightCheek:[], silhouette:[], ...}
-
-  function meshBox(mesh){
-    if(!mesh || !mesh.length) return null;
-    const xs = mesh.map(p=>p[0]), ys = mesh.map(p=>p[1]);
-    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs)-Math.min(...xs), height: Math.max(...ys)-Math.min(...ys) };
+  setProgress((20 - countdown)/20 * 35 + 5);
+  if(countdown <= 0){
+    clearInterval(cdIv);
+    attemptLoadAll(3);
   }
+},1000);
+attemptLoadAll(3).catch(()=>{ /* fallback handled above */ });
 
-  // Face shape methods
-  function faceShape_methods_ann(ann, box){
-    try{
-      const jawLeft = ann.silhouette?.[10] || [box.x + box.width*0.12, box.y + box.height];
-      const jawRight = ann.silhouette?.[ann.silhouette.length-11] || [box.x + box.width*0.88, box.y + box.height];
-      const chin = ann.silhouette?.[Math.floor(ann.silhouette.length/2)] || [box.x + box.width/2, box.y + box.height];
-      const browY = ann.leftEyebrowUpper?.[2]?.[1] || ann.rightEyebrowUpper?.[2]?.[1] || (box.y + box.height*0.2);
-      const jawW = Math.max(1, dist(jawLeft, jawRight));
-      const faceH = Math.max(1, Math.abs(chin[1] - browY));
-      const m1 = clamp((jawW/faceH - 0.30)/0.6,0,1)*100;
+/* ---------- Scoring functions (improved) ----------
+   We'll reuse the advanced scoring functions from previous versions:
+   - jawline (3 methods)
+   - faceShape (3 methods) + mapping to 7 shapes
+   - eyes (3 methods) + mapping to 7 types
+   - cheekbones (3), symmetry (3), skin (3), proportions (3), chin (3), ratio (3)
+   The functions below are condensed but full-featured and defensive.
+*/
 
-      const foreheadW = Math.abs((ann.leftEyeUpper0?.[0]?.[0] || box.x + box.width*0.3) - (ann.rightEyeUpper0?.slice(-1)?.[0]?.[0] || box.x + box.width*0.7));
-      const m2 = clamp(1 - Math.abs((foreheadW/jawW) - 1)/0.8,0,1)*100;
+/* helper meshBox */
+function meshBox(mesh){ if(!mesh||!mesh.length) return null; const xs = mesh.map(p=>p[0]), ys = mesh.map(p=>p[1]); return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs)-Math.min(...xs), height: Math.max(...ys)-Math.min(...ys) }; }
 
-      const leftCheek = ann.leftCheek?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
-      const rightCheek = ann.rightCheek?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
-      const cheekW = Math.max(1, dist(leftCheek, rightCheek));
-      const m3 = clamp((cheekW / (box.width || jawW) - 0.28)/0.17, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function faceShape_methods_off(box, ctx){
-    try{
-      const ratio = (box.width / Math.max(1, box.height));
-      const m1 = clamp((ratio - 0.6)/0.6, 0,1)*100;
-      // brightness sample
-      const cx = Math.round(box.x + box.width*0.5), cy = Math.round(box.y + box.height*0.35);
-      const w = Math.max(4, Math.round(box.width*0.18)), h = Math.max(4, Math.round(box.height*0.08));
-      const d = ctx.getImageData(Math.max(0,cx-w/2), Math.max(0,cy-h/2), Math.min(w, ctx.canvas.width - Math.max(0,cx-w/2)), Math.min(h, ctx.canvas.height - Math.max(0,cy-h/2))).data;
-      let lum=0,n=0; for(let i=0;i<d.length;i+=4){ lum += 0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; n++; }
-      const m2 = clamp((lum / Math.max(1,n))/255 * 100, 0,100);
-      const m3 = clamp(50 + (box.width/(box.width+box.height))*40, 0,100);
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
+/* JAWLINE */
+function jaw_mA(ann, box){ try{ const s=ann.silhouette||[]; const left=s[10]||s[0], right=s[s.length-11]||s[s.length-1]; const chin=s[Math.floor(s.length/2)]||s[152]||[box.x+box.width/2,box.y+box.height]; if(!left||!right||!chin) return 50; const la=Math.abs(Math.atan2(chin[1]-left[1],chin[0]-left[0]))*180/Math.PI; const ra=Math.abs(Math.atan2(chin[1]-right[1],chin[0]-right[0]))*180/Math.PI; const avg=(la+ra)/2; const sharp=clamp((140-avg)/60,0,1)*100; const sym=100-Math.abs(la-ra); return Math.round(clamp(sharp*0.7+sym*0.3,0,100)); }catch(e){return 50;} }
+function jaw_mB(ann, box){ try{ const s=ann.silhouette||[]; const left=s[0]||[box.x+box.width*0.15,box.y+box.height], right=s[s.length-1]||[box.x+box.width*0.85,box.y+box.height]; const chin=s[Math.floor(s.length/2)]||[box.x+box.width/2,box.y+box.height]; const mid=[(left[0]+right[0])/2,(left[1]+right[1])/2]; const proj=dist(chin,mid); const rel=proj/Math.max(1,box.height); return Math.round(clamp((rel-0.08)/0.2,0,1)*100);}catch(e){return 50;} }
+function jaw_mC(ann, box){ try{ const s=ann.silhouette||[]; if(s.length<8) return 50; const len=s.length; const idxL=Math.floor(len*0.15), idxR=Math.floor(len*0.85); function cur(i){const p=s[i]; const p1=s[Math.max(0,i-3)], p2=s[Math.min(len-1,i+3)]; const a=dist(p1,p), b=dist(p,p2), c=dist(p1,p2); if(c===0) return 0; return Math.abs((a+b-c)/c);} const cval=mean([cur(idxL),cur(idxR)]); return Math.round(clamp(1-cval*3,0,1)*100);}catch(e){return 50;} }
+function jaw_score(ann,box){ return Math.round(mean([jaw_mA(ann,box),jaw_mB(ann,box),jaw_mC(ann,box)])); }
 
-  // Eyes methods
-  function eyes_methods_ann(ann, box){
-    try{
-      const left = ann.leftEye || ann.leftEyeUpper0 || [];
-      const right = ann.rightEye || ann.rightEyeUpper0 || [];
-      function ear(pt){ if(!pt||pt.length<6) return 0.12; return (dist(pt[1],pt[5]) + dist(pt[2],pt[4]))/(2*Math.max(1, dist(pt[0],pt[3]))); }
-      const openRatio = (ear(left) + ear(right))/2;
-      const m1 = clamp((openRatio - 0.08)/0.5,0,1)*100;
-      const leftOuter = left[0] || [box.x + box.width*0.3, 0];
-      const rightOuter = right[right.length-1] || [box.x + box.width*0.7, 0];
-      const inter = dist(leftOuter, rightOuter);
-      const rel = inter / Math.max(1, box.width);
-      const m2 = clamp(1 - Math.abs(rel - 0.32)/0.2,0,1)*100;
-      const m3 = clamp((openRatio - 0.08)*150,0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function eyes_methods_off(box, ctx){
-    try{
-      const cx = Math.round(box.x + box.width*0.5), cy = Math.round(box.y + box.height*0.32);
-      const w = Math.max(4, Math.round(box.width*0.6)), h = Math.max(4, Math.round(box.height*0.18));
-      const d = ctx.getImageData(Math.max(0,cx-w/2), Math.max(0,cy-h/2), Math.min(w, ctx.canvas.width - Math.max(0,cx-w/2)), Math.min(h, ctx.canvas.height - Math.max(0,cy-h/2))).data;
-      let lum=0,n=0; for(let i=0;i<d.length;i+=4){ lum += 0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; n++; }
-      const meanL = n? lum/n : 120;
-      const m1 = clamp((1 - Math.abs((meanL/255) - 0.4))*120,0,100);
-      const m2 = clamp(60 - Math.abs(box.width/box.height - 0.32)*120, 0,100);
-      const m3 = clamp(40 + (meanL/255)*60, 0,100);
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
+/* FACE SHAPE */
+function faceShape_mA(ann,box){ try{ const leftTemple=ann.leftEyeUpper0?.[0]||[box.x+box.width*0.28,box.y+box.height*0.25]; const rightTemple=ann.rightEyeUpper0?.slice(-1)?.[0]||[box.x+box.width*0.72,box.y+box.height*0.25]; const leftCheek=ann.leftCheek?.[0]||[box.x+box.width*0.28,box.y+box.height*0.45]; const rightCheek=ann.rightCheek?.[0]||[box.x+box.width*0.72,box.y+box.height*0.45]; const jawLeft=ann.silhouette?.[10]||[box.x+box.width*0.15,box.y+box.height]; const jawRight=ann.silhouette?.slice(-11)?.[0]||[box.x+box.width*0.85,box.y+box.height]; const topW=dist(leftTemple,rightTemple), midW=dist(leftCheek,rightCheek), jawW=dist(jawLeft,jawRight); const chin=ann.silhouette?.[Math.floor((ann.silhouette?.length||0)/2)]||[box.x+box.width/2,box.y+box.height]; const browY=ann.leftEyebrowUpper?.[2]?.[1]||box.y+box.height*0.2; const faceH=Math.max(1,Math.abs(chin[1]-browY)); const rMid=midW/faceH; return Math.round(clamp(1-Math.abs(rMid-0.32)/0.2,0,1)*100);}catch(e){return 50;} }
+function faceShape_mB(ann,box){ try{ const s=ann.silhouette||[]; const len=s.length; const jawLeft=s[0]||[box.x+box.width*0.15,box.y+box.height]; const jawRight=s[len-1]||[box.x+box.width*0.85,box.y+box.height]; const leftCheek=ann.leftCheek?.[0]||[box.x+box.width*0.28,box.y+box.height*0.45]; const rightCheek=ann.rightCheek?.[0]||[box.x+box.width*0.72,box.y+box.height*0.45]; const wTop=Math.abs((ann.leftEyeUpper0?.[0]?.[0]||box.x+box.width*0.3)-(ann.rightEyeUpper0?.slice(-1)?.[0]?.[0]||box.x+box.width*0.7)); const wMid=dist(leftCheek,rightCheek); const wJaw=dist(jawLeft,jawRight); const diff=Math.abs(wTop-wJaw)/Math.max(1,wMid); return Math.round(clamp(1-diff/0.2,0,1)*100);}catch(e){return 50;} }
+function faceShape_mC(ann,box){ try{ const mesh=ann.scaledMesh||ann; const b=meshBox(mesh); if(!b) return 50; const r=b.height/Math.max(1,b.width); return Math.round(clamp(1-Math.abs(r-1.35)/0.6,0,1)*100);}catch(e){return 50;} }
+function faceShape_score(ann,box){ return Math.round(mean([faceShape_mA(ann,box),faceShape_mB(ann,box),faceShape_mC(ann,box)])); }
 
-  // Jaw methods
-  function jaw_methods_ann(ann, box){
-    try{
-      const jaw = ann.silhouette || [];
-      const left = jaw[0] || [box.x + box.width*0.12, box.y + box.height];
-      const right = jaw[jaw.length-1] || [box.x + box.width*0.88, box.y + box.height];
-      const chin = jaw[Math.floor(jaw.length/2)] || [(left[0]+right[0])/2, (left[1]+right[1])/2];
-      const v1 = [left[0]-chin[0], left[1]-chin[1]], v2 = [right[0]-chin[0], right[1]-chin[1]];
-      const dot = v1[0]*v2[0] + v1[1]*v2[1];
-      const na = Math.hypot(v1[0],v1[1])||1, nb = Math.hypot(v2[0],v2[1])||1;
-      const cos = clamp(dot/(na*nb), -1,1); const angle = Math.acos(cos)*180/Math.PI;
-      const m1 = clamp((140-angle)/60, 0,1)*100;
-      const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
-      const proj = dist(chin, mid)/Math.max(1, box.height);
-      const m2 = clamp(proj / 0.22, 0,1)*100;
-      const jawW = Math.max(1, dist(left, right));
-      const cheekLeft = ann.leftCheek?.[0] || left; const cheekRight = ann.rightCheek?.[0] || right;
-      const cheekW = Math.max(1, dist(cheekLeft, cheekRight));
-      const m3 = clamp((jawW/cheekW - 0.9)/0.5, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function jaw_methods_off(box, ctx){
-    try{
-      const m1 = clamp((box.width/Math.max(1,box.height) - 0.4)*120, 0,100);
-      const sample = ctx.getImageData(Math.round(box.x), Math.round(box.y + box.height*0.6), Math.max(4,Math.round(box.width*0.6)), Math.max(4,Math.round(box.height*0.25))).data;
-      let edgeSum=0,cnt=0;
-      for(let i=0;i<sample.length;i+=4){ edgeSum += Math.abs((sample[i]||0) - (sample[i+4]||0)); cnt++; }
-      const grad = cnt ? edgeSum / cnt : 10;
-      const m2 = clamp((grad/40), 0,1)*100;
-      const m3 = clamp(30 + (box.width/Math.max(1,box.height))*50, 0,100);
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
+const FACE_SHAPES = ['Diamond','Oval','Round','Square','Heart','Triangle','Rectangle'];
+function detectFaceShape(ann,box){ try{ const leftCheek=ann.leftCheek?.[0]||[box.x+box.width*0.28,box.y+box.height*0.45]; const rightCheek=ann.rightCheek?.[0]||[box.x+box.width*0.72,box.y+box.height*0.45]; const jawLeft=ann.silhouette?.[10]||[box.x+box.width*0.15,box.y+box.height]; const jawRight=ann.silhouette?.slice(-11)?.[0]||[box.x+box.width*0.85,box.y+box.height]; const browLeft=ann.leftEyebrowUpper?.[2]||[box.x+box.width*0.35,box.y+box.height*0.2]; const browRight=ann.rightEyebrowUpper?.[2]||[box.x+box.width*0.65,box.y+box.height*0.2]; const topW=dist(browLeft,browRight); const midW=dist(leftCheek,rightCheek); const jawW=dist(jawLeft,jawRight); const b2=meshBox(ann.scaledMesh||ann)||box; const h=b2?b2.height:box.height||1; const ratio=h/Math.max(1,midW); if(topW<jawW*0.9 && ratio>1.35) return 'Diamond'; if(Math.abs(topW-jawW)<midW*0.08 && ratio>1.25) return 'Oval'; if(Math.abs(topW-jawW)<midW*0.07 && ratio<1.15) return 'Round'; if(Math.abs(topW-jawW)<midW*0.06 && ratio>1.15) return 'Square'; if(topW>jawW*1.05 && ratio>1.20) return 'Heart'; if(jawW>midW*1.05 && ratio<1.1) return 'Triangle'; if(ratio>1.45) return 'Rectangle'; if(ratio>=1.30) return 'Oval'; if(ratio>=1.15) return 'Square'; return 'Round'; }catch(e){return 'Unknown';} }
 
-  // Cheekbones
-  function cheek_methods_ann(ann, box){
-    try{
-      const left = ann.leftCheek?.[0] || [box.x + box.width*0.25, box.y + box.height*0.45];
-      const right = ann.rightCheek?.[0] || [box.x + box.width*0.75, box.y + box.height*0.45];
-      const cheekW = dist(left, right);
-      const m1 = clamp((cheekW / Math.max(1, box.width) - 0.26)/0.2, 0,1)*100;
-      const cheekY = (left[1] + right[1])/2; const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
-      const browY = ann.leftEyebrowUpper?.[2]?.[1] || (box.y + box.height*0.2);
-      const rel = (chinY - cheekY) / Math.max(1, chinY - browY);
-      const m2 = clamp(1 - Math.abs(rel - 0.5)/0.5, 0,1)*100;
-      const m3 = clamp((cheekW/box.width - 0.28)/0.17,0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function cheek_methods_off(box, ctx){
-    try{
-      const m1 = clamp((box.width/Math.max(1,box.height))*80 - 10, 0,100);
-      const m2 = clamp(60,0,100);
-      const m3 = clamp(45 + (box.width/(box.width+box.height))*50, 0,100);
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
+/* EYES */
+const EYE_TYPES = ['Hunter','Almond','Hooded','Monolid','Downturned','Upturned','Wide-set'];
+function eyes_mA(ann,box){ try{ const left=ann.leftEye||[], right=ann.rightEye||[]; function ear(p){ if(!p||p.length<6) return 0.12; const A=dist(p[1],p[5]), B=dist(p[2],p[4]); const C=Math.max(1,dist(p[0],p[3])); return (A+B)/(2*C); } const v=(ear(left)+ear(right))/2; return Math.round(clamp((v-0.08)/0.5,0,1)*100);}catch(e){return 50;} }
+function eyes_mB(ann,box){ try{ const leftOuter=ann.leftEyeLower0?.[0]||ann.leftEye?.[0]||[box.x+box.width*0.32,0]; const rightOuter=(ann.rightEyeLower0?.slice(-1)||ann.rightEye?.slice(-1))[0]||[box.x+box.width*0.68,0]; const inter=dist(leftOuter,rightOuter); const faceW=box.width||1; const rel=inter/faceW; return Math.round(clamp(1-Math.abs(rel-0.32)/0.2,0,1)*100);}catch(e){return 50;} }
+function eyes_mC(ann,box){ try{ const left=ann.leftEye||[], right=ann.rightEye||[]; function openness(p){ if(!p||p.length<6) return 0.12; return (dist(p[1],p[5])+dist(p[2],p[4]))/(2*Math.max(1,dist(p[0],p[3]))); } const open=(openness(left)+openness(right))/2; return Math.round(clamp((open-0.08)/0.5,0,1)*100);}catch(e){return 50;} }
+function mapEyeType(ann,box){ try{ const left=ann.leftEye||[], right=ann.rightEye||[]; const faceW=box.width||1; const inter=dist(left[0]||[0,0], right[3]||[0,0]); const interRel=inter/Math.max(1,faceW); const open=eyes_mC(ann,box)/100; if(open>0.45 && interRel<0.35) return 'Hunter'; if(open>0.35 && interRel>=0.32 && interRel<=0.40) return 'Almond'; if(open<0.16) return 'Monolid'; if(open<0.28) return 'Hooded'; if(interRel>0.42) return 'Wide-set'; if(open>0.25 && interRel<0.30) return 'Upturned'; if(open>0.20 && interRel<0.28) return 'Downturned'; return 'Almond'; }catch(e){return 'Almond';} }
 
-  // Symmetry
-  function symmetry_methods_ann(ann, box){
-    try{
-      const pts = ann.silhouette || [];
-      if(!pts.length) return [50,50,50];
-      const cx = box.x + box.width/2;
-      const pairs = [[33,263],[159,386],[133,362]];
-      const diffs = pairs.map(([l,r])=>{
-        const L = pts[l] || pts[0], R = pts[r] || pts[pts.length-1];
-        return Math.abs(Math.abs(L[0]-cx) - Math.abs(R[0]-cx));
-      });
-      const md = mean(diffs);
-      const m1 = clamp(1 - md / Math.max(1, box.width) / 0.08, 0,1)*100;
-      const vdiffs = pairs.map(([l,r])=>{
-        const L = pts[l] || [0,0], R = pts[r] || [0,0]; return Math.abs(L[1]-R[1]);
-      });
-      const mdv = mean(vdiffs);
-      const m2 = clamp(1 - mdv / Math.max(1, box.height) / 0.08, 0,1)*100;
-      const leftAvg = mean(pts.slice(0,Math.floor(pts.length/2)).map(p=>p[0]));
-      const rightAvg = mean(pts.slice(Math.floor(pts.length/2)).map(p=>p[0]));
-      const diffAvg = Math.abs(leftAvg - rightAvg) / Math.max(1, box.width);
-      const m3 = clamp(1 - diffAvg / 0.2, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function symmetry_methods_off(box, ctx){
-    try{
-      const w = Math.max(2, Math.round(box.width/2)), h = Math.max(2, Math.round(box.height));
-      const left = ctx.getImageData(Math.round(box.x), Math.round(box.y), w, h).data;
-      const right = ctx.getImageData(Math.round(box.x + box.width/2), Math.round(box.y), w, h).data;
-      let diff=0,cnt=0;
-      for(let i=0;i<Math.min(left.length, right.length); i+=4){ diff += Math.abs(left[i] - right[i]); cnt++; }
-      const rel = cnt ? diff / (255*cnt) : 0;
-      const m1 = clamp(1 - rel, 0,1)*100;
-      return [Math.round(m1), 60, 50];
-    }catch(e){ return [50,50,50]; }
-  }
+/* CHEEKBONES */
+function cheek_mA(ann,box){ try{ const l=ann.leftCheek?.[0]||[box.x+box.width*0.28,box.y+box.height*0.45]; const r=ann.rightCheek?.[0]||[box.x+box.width*0.72,box.y+box.height*0.45]; const w=dist(l,r)/Math.max(1,box.width); return Math.round(clamp((w-0.26)/0.18,0,1)*100);}catch(e){return 50;} }
+function cheek_mB(ann,box){ try{ const cheekY=((ann.leftCheek?.[0]?.[1]||0)+(ann.rightCheek?.[0]?.[1]||0))/2; const chinY=ann.silhouette?.[152]?.[1]||box.y+box.height; const browY=ann.leftEyebrowUpper?.[2]?.[1]||box.y; const rel=(chinY-cheekY)/Math.max(1,chinY-browY); return Math.round(clamp(1-Math.abs(rel-0.48)/0.4,0,1)*100);}catch(e){return 50;} }
+function cheek_mC(ann,box){ try{ const l=ann.leftCheek?.[0]||[0,0], r=ann.rightCheek?.[0]||[0,0]; const cheekW=dist(l,r); const faceW=box.width||1; return Math.round(clamp((cheekW/faceW - 0.28)/0.17,0,1)*100);}catch(e){return 50;} }
+function cheek_score(ann,box){ return Math.round(mean([cheek_mA(ann,box),cheek_mB(ann,box),cheek_mC(ann,box)])); }
 
-  // Ratio, proportions, chin functions similar (for brevity keep consistent approach)
-  function ratio_methods_ann(ann, box){
-    try{
-      const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
-      const browY = ann.leftEyebrowUpper?.[2]?.[1] || (box.y);
-      const faceH = Math.max(1, Math.abs(chinY - browY));
-      const faceW = box.width || 1;
-      const r = faceW / faceH;
-      const m1 = clamp(1 - Math.abs(r - 0.8)/0.5, 0,1)*100;
-      const noseY = ann.noseTip?.[0]?.[1] || (browY + faceH*0.45);
-      const a = (noseY - browY), b2 = (chinY - noseY);
-      const total = faceH || 1;
-      const thirds = [a/total || 0, b2/total || 0, 0];
-      const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
-      const m2 = clamp(1 - dev*3, 0,1)*100;
-      const m3 = clamp(1 - Math.abs(faceW/faceH - 0.8)/0.8, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function ratio_methods_off(box, ctx){
-    try{
-      const r = box.width / Math.max(1, box.height);
-      const m1 = clamp(1 - Math.abs(r - 0.8)/0.8, 0,1)*100;
-      return [Math.round(m1), 60, 50];
-    }catch(e){ return [50,50,50]; }
-  }
+/* SYMMETRY */
+function sym_mA(ann,box){ try{ const pts=ann.silhouette||[]; if(!pts.length) return 50; const cx=box.x+box.width/2; const pairs=[[33,263],[159,386],[133,362]]; const diffs=pairs.map(([l,r])=>{ const L=pts[l]||pts[0], R=pts[r]||pts[pts.length-1]; return Math.abs(Math.abs(L[0]-cx)-Math.abs(R[0]-cx)); }); const md=mean(diffs); return Math.round(clamp(1-md/Math.max(1,box.width)/0.08,0,1)*100);}catch(e){return 50;} }
+function sym_mB(ann,box){ try{ const pts=ann.silhouette||[]; const leftAvg=mean(pts.slice(0,Math.floor(pts.length/2)).map(p=>p[0])); const rightAvg=mean(pts.slice(Math.floor(pts.length/2)).map(p=>p[0])); const diff=Math.abs(leftAvg-rightAvg)/Math.max(1,box.width); return Math.round(clamp(1-diff/0.2,0,1)*100);}catch(e){return 50;} }
+function sym_mC(ann,box){ try{ const pairs=[[36,45],[39,42],[48,54]]; const pts=ann.silhouette||[]; let s=0; pairs.forEach(([l,r])=> s+=Math.abs((pts[l]?.[0]||0)-(pts[r]?.[0]||0))); return Math.round(clamp(1-(s/3)/Math.max(1,box.width)/0.06,0,1)*100);}catch(e){return 50;} }
+function sym_score(ann,box){ return Math.round(mean([sym_mA(ann,box),sym_mB(ann,box),sym_mC(ann,box)])); }
 
-  function proportions_methods_ann(ann, box){
-    try{
-      const leftEye = ann.leftEye || []; const rightEye = ann.rightEye || [];
-      const eyeCenterY = mean(leftEye.concat(rightEye).map(p=>p[1])) || 0;
-      const mouthY = mean((ann.lipsUpperOuter || []).map(p=>p[1])) || 0;
-      const chinY = ann.silhouette?.[152]?.[1] || (box.y + box.height);
-      const d1 = mouthY - eyeCenterY, d2 = chinY - mouthY;
-      const ratio = d1 / Math.max(1, d1 + d2);
-      const m1 = clamp(1 - Math.abs(ratio - 0.33)/0.5, 0,1)*100;
-      const browY = ann.leftEyebrowUpper?.[2]?.[1] || 0;
-      const noseY = ann.noseTip?.[0]?.[1] || 0;
-      const total = Math.max(1, chinY - browY);
-      const a = noseY - browY, b2 = mouthY - noseY, c = chinY - mouthY;
-      const thirds = [a/total || 0, b2/total || 0, c/total || 0];
-      const dev = mean(thirds.map(t=>Math.abs(t - 1/3)));
-      const m2 = clamp(1 - dev*3, 0,1)*100;
-      const leftW = dist(ann.silhouette?.[0] || [0,0], ann.silhouette?.[152] || [0,0]);
-      const rightW = dist(ann.silhouette?.[16] || [0,0], ann.silhouette?.[152] || [0,0]);
-      const rel = Math.abs(leftW-rightW) / Math.max(1, Math.max(leftW, rightW));
-      const m3 = clamp(1 - rel/0.3, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function proportions_methods_off(box, ctx){
-    try{ return [60,60,50]; }catch(e){ return [50,50,50]; }
-  }
+/* SKIN (sampling) */
+function skin_sample_stats(ctx,sx,sy,w,h){ try{ const data=ctx.getImageData(sx,sy,w,h).data; const lum=[], rg=[]; let skinLike=0,total=0; for(let i=0;i<data.length;i+=4){ const r=data[i], g=data[i+1], b=data[i+2]; const L=0.2126*r+0.7152*g+0.0722*b; lum.push(L); rg.push(Math.abs(r-g)); if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++; total++; } const meanL=mean(lum); const variance=lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/Math.max(1,lum.length); const std=Math.sqrt(Math.max(0,variance)); const meanRG=mean(rg); return {std, prop: skinLike/Math.max(1,total), meanL, meanRG}; }catch(e){return {std:40, prop:0.6, meanL:130, meanRG:20}; } }
+function skin_mA(ctx, scaledBox){ try{ const w=Math.max(6, Math.round(scaledBox.width*0.18)), h=Math.max(6, Math.round(scaledBox.height*0.08)); const x1=clamp(Math.round(scaledBox.x+scaledBox.width*0.25),0,ctx.canvas.width-1); const y1=clamp(Math.round(scaledBox.y+scaledBox.height*0.36),0,ctx.canvas.height-1); const x2=clamp(Math.round(scaledBox.x+scaledBox.width*0.65),0,ctx.canvas.width-1); const y2=y1; const s1=skin_sample_stats(ctx,x1,y1,Math.min(w,ctx.canvas.width-x1),Math.min(h,ctx.canvas.height-y1)); const s2=skin_sample_stats(ctx,x2,y2,Math.min(w,ctx.canvas.width-x2),Math.min(h,ctx.canvas.height-y2)); const smooth=clamp(1-mean([s1.std,s2.std])/60,0,1); const prop=clamp(mean([s1.prop,s2.prop]),0,1); return Math.round((smooth*0.7+prop*0.3)*100);}catch(e){return 60;} }
+function skin_mB(ctx, scaledBox){ try{ const w=Math.max(6, Math.round(scaledBox.width*0.2)), h=Math.max(6, Math.round(scaledBox.height*0.12)); const x=clamp(Math.round(scaledBox.x+scaledBox.width*0.4),0,ctx.canvas.width-1); const y=clamp(Math.round(scaledBox.y+scaledBox.height*0.44),0,ctx.canvas.height-1); const s=skin_sample_stats(ctx,x,y,Math.min(w,ctx.canvas.width-x),Math.min(h,ctx.canvas.height-y)); const colorUniform=clamp(1-s.meanRG/70,0,1); return Math.round((colorUniform*0.6+clamp(1-s.std/50,0,1)*0.4)*100);}catch(e){return 65;} }
+function skin_mC(ctx, scaledBox){ try{ const w=Math.max(6, Math.round(scaledBox.width*0.25)), h=Math.max(6, Math.round(scaledBox.height*0.14)); const x=clamp(Math.round(scaledBox.x+scaledBox.width*0.35),0,ctx.canvas.width-1); const y=clamp(Math.round(scaledBox.y+scaledBox.height*0.4),0,ctx.canvas.height-1); const s=skin_sample_stats(ctx,x,y,Math.min(w,ctx.canvas.width-x),Math.min(h,ctx.canvas.height-y)); return Math.round(clamp(1-s.std/55,0,1)*100);}catch(e){return 60;} }
+function skin_score(ctx, scaledBox){ const a=skin_mA(ctx,scaledBox), b=skin_mB(ctx,scaledBox), c=skin_mC(ctx,scaledBox); return Math.round(mean([a,b,c])); }
 
-  function chin_methods_ann(ann, box){
-    try{
-      const chin = ann.silhouette?.[152] || [0,0];
-      const left = ann.silhouette?.[0] || [box.x + box.width*0.12, box.y + box.height];
-      const right = ann.silhouette?.[16] || [box.x + box.width*0.88, box.y + box.height];
-      const mid = [(left[0]+right[0])/2, (left[1]+right[1])/2];
-      const m1 = clamp(dist(chin, mid)/Math.max(1, box.height)/0.25, 0,1)*100;
-      const mouthY = mean((ann.lipsUpperInner || []).map(p=>p[1])) || 0;
-      const m2 = clamp((chin[1] - mouthY) / Math.max(1, box.height) / 0.18, 0,1)*100;
-      const m3 = clamp((m1 + m2)/2, 0,1)*100;
-      return [Math.round(m1), Math.round(m2), Math.round(m3)];
-    }catch(e){ return [50,50,50]; }
-  }
-  function chin_methods_off(box, ctx){ try{ return [50,50,50]; }catch(e){ return [50,50,50]; } }
+/* PROPORTIONS/CHIN/RATIO */
+function proportions_methods_ann(ann,box){ try{ const leftEye=ann.leftEye||[], rightEye=ann.rightEye||[]; const eyeCenterY=mean(leftEye.concat(rightEye).map(p=>p[1]))||0; const mouthY=mean((ann.lipsUpperOuter||[]).map(p=>p[1]))||0; const chinY=ann.silhouette?.[152]?.[1]||(box.y+box.height); const d1=mouthY-eyeCenterY, d2=chinY-mouthY; const ratio=d1/Math.max(1,d1+d2); const m1=clamp(1-Math.abs(ratio-0.33)/0.5,0,1)*100; const browY=ann.leftEyebrowUpper?.[2]?.[1]||0; const noseY=ann.noseTip?.[0]?.[1]||0; const total=Math.max(1,chinY-browY); const a=noseY-browY, b2=mouthY-noseY, c=chinY-mouthY; const thirds=[a/total||0,b2/total||0,c/total||0]; const dev=mean(thirds.map(t=>Math.abs(t-1/3))); const m2=clamp(1-dev*3,0,1)*100; const leftW=dist(ann.silhouette?.[0]||[0,0], ann.silhouette?.[152]||[0,0]); const rightW=dist(ann.silhouette?.[16]||[0,0], ann.silhouette?.[152]||[0,0]); const rel=Math.abs(leftW-rightW)/Math.max(1,Math.max(leftW,rightW)); const m3=clamp(1-rel/0.3,0,1)*100; return [Math.round(m1),Math.round(m2),Math.round(m3)]; }catch(e){return [50,50,50];} }
+function chin_methods_ann(ann,box){ try{ const chin=ann.silhouette?.[152]||[0,0]; const left=ann.silhouette?.[0]||[box.x+box.width*0.12,box.y+box.height]; const right=ann.silhouette?.[16]||[box.x+box.width*0.88,box.y+box.height]; const mid=[(left[0]+right[0])/2,(left[1]+right[1])/2]; const m1=clamp(dist(chin,mid)/Math.max(1,box.height)/0.25,0,1)*100; const mouthY=mean((ann.lipsUpperInner||[]).map(p=>p[1]))||0; const m2=clamp((chin[1]-mouthY)/Math.max(1,box.height)/0.18,0,1)*100; const m3=clamp((m1+m2)/2,0,1)*100; return [Math.round(m1),Math.round(m2),Math.round(m3)]; }catch(e){return [50,50,50];} }
+function ratio_methods_ann(ann,box){ try{ const chinY=ann.silhouette?.[152]?.[1]||(box.y+box.height); const browY=ann.leftEyebrowUpper?.[2]?.[1]||(box.y); const faceH=Math.max(1,Math.abs(chinY-browY)); const faceW=box.width||1; const r=faceW/faceH; const m1=clamp(1-Math.abs(r-0.8)/0.5,0,1)*100; const noseY=ann.noseTip?.[0]?.[1]||(browY+faceH*0.45); const a=(noseY-browY), b2=(chinY-noseY); const total=faceH||1; const thirds=[a/total||0,b2/total||0,0]; const dev=mean(thirds.map(t=>Math.abs(t-1/3))); const m2=clamp(1-dev*3,0,1)*100; const m3=clamp(1-Math.abs(faceW/faceH-0.8)/0.8,0,1)*100; return [Math.round(m1),Math.round(m2),Math.round(m3)]; }catch(e){return [50,50,50];} }
 
-  // skin sampling
-  function skin_methods_canvas(ctx, scaledBox){
-    try{
-      const w = Math.max(4, Math.round(scaledBox.width * 0.18));
-      const h = Math.max(4, Math.round(scaledBox.height * 0.08));
-      const x1 = clamp(Math.round(scaledBox.x + scaledBox.width*0.25), 0, ctx.canvas.width-1);
-      const y1 = clamp(Math.round(scaledBox.y + scaledBox.height*0.40), 0, ctx.canvas.height-1);
-      const x2 = clamp(Math.round(scaledBox.x + scaledBox.width*0.70), 0, ctx.canvas.width-1);
-      const y2 = y1;
-      const d1 = ctx.getImageData(x1, y1, Math.min(w, ctx.canvas.width-x1), Math.min(h, ctx.canvas.height-y1)).data;
-      const d2 = ctx.getImageData(x2, y2, Math.min(w, ctx.canvas.width-x2), Math.min(h, ctx.canvas.height-y2)).data;
-      function stats(data){
-        const lum=[]; let skinLike=0, total=0;
-        for(let i=0;i<data.length;i+=4){
-          const r=data[i], g=data[i+1], b=data[i+2];
-          const L = 0.2126*r + 0.7152*g + 0.0722*b; lum.push(L);
-          if(r>50 && g>35 && b>25 && r>g && r>b) skinLike++;
-          total++;
-        }
-        const meanL = mean(lum);
-        const variance = lum.reduce((s,v)=>s+(v-meanL)*(v-meanL),0)/Math.max(1,lum.length);
-        const std = Math.sqrt(Math.max(0,variance));
-        return {std, prop: skinLike/Math.max(1,total), meanL};
-      }
-      const s1 = stats(d1), s2 = stats(d2);
-      const smooth = clamp(1 - mean([s1.std, s2.std]) / 60, 0,1);
-      const prop = clamp(mean([s1.prop, s2.prop]), 0,1);
-      const m1 = Math.round((smooth*0.7 + prop*0.3)*100);
-      const m2 = Math.round(clamp(1 - mean([s1.std, s2.std])/50, 0,1)*100);
-      const m3 = Math.round(60 + Math.max(0, (255 - mean([s1.meanL, s2.meanL]))/255 * 40 ));
-      return [m1,m2,m3];
-    }catch(e){ return [65,70,60]; }
-  }
+/* OVERALL weights */
+const OVERALL_WEIGHTS = { jawline:0.18, cheekbones:0.12, faceShape:0.12, eyes:0.10, symmetry:0.15, skin:0.08, proportions:0.08, chin:0.07, ratio:0.10 };
+function computeOverall(scores){ let sum=0, tot=0; for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0) * OVERALL_WEIGHTS[k]; tot += OVERALL_WEIGHTS[k]; } return Math.round(sum / tot); }
 
-  // map 7 types
-  const EYE_TYPES = ['Hunter','Almond','Hooded','Monolid','Downturned','Upturned','Wide-set'];
-  const FACE_SHAPES = ['Diamond','Oval','Round','Square','Heart','Triangle','Rectangle'];
-  function mapEye(score){ return EYE_TYPES[Math.min(6, Math.floor(score/(100/7)))]; }
-  function mapFace(score){ return FACE_SHAPES[Math.min(6, Math.floor(score/(100/7)))]; }
+/* ---------- Suggestion phrases + predicates ----------
+   For each of the 10 categories we prepare up to 10 natural suggestions.
+   Each suggestion has:
+     - text: natural polish suggestion
+     - predicate: function(ann, box, ctx, scores) => boolean meaning "confirmed issue exists"
+   If predicate false => we re-evaluate the underlying metric once and check again.
+   If still false => suggestion is discarded.
+*/
 
-  // overall weights
-  const OVERALL_WEIGHTS = { jawline:0.18, cheekbones:0.12, faceShape:0.12, eyes:0.10, symmetry:0.15, skin:0.08, proportions:0.08, chin:0.07, ratio:0.10 };
-  function computeOverall(scores){ let sum=0, tot=0; for(const k in OVERALL_WEIGHTS){ sum += (scores[k]||0) * OVERALL_WEIGHTS[k]; tot += OVERALL_WEIGHTS[k]; } return Math.round(sum / tot); }
+/* Utilities for suggestion predicates */
+function low(v, threshold){ return v < threshold; }
+function high(v, threshold){ return v > threshold; }
 
-  // ---------- Main analyze function ----------
-  async function analyzeFile(file){
-    resultsGrid.innerHTML = '';
-    lastResults = null;
-    if(!file || !file.type.startsWith('image/')){ statusText.textContent = 'Wybierz plik obrazkowy.'; return; }
-    statusText.textContent = 'Przygotowanie obrazu...';
-    previewImg.src = URL.createObjectURL(file);
-    previewImg.style.display = 'block';
-    hint.style.display = 'none';
-    uploadLabel.style.display = 'none';
-    fileInput.style.display = 'none';
-    changeBtn.style.display = 'inline-block';
+/* Build suggestion templates per category */
+function buildSuggestionCandidates(ann, box, ctx, scaledBox, scores){
+  // scores: mapping key->value (0-100)
+  const c = {}; // category => array of {text, predicate}
+  // 1) jawline
+  c.jawline = [
+    { text: 'Linia żuchwy mogłaby być ostrzejsza — spróbuj profilowego zdjęcia pod lepszym światłem.', predicate: ()=> scores.jawline < 55 },
+    { text: 'Asymetria w linii żuchwy jest zauważalna — rozważ ustawienie twarzy prosto względem aparatu.', predicate: ()=> scores.jawline < 45 },
+    { text: 'Broda wydaje się cofnięta — popraw kąt aparatu (lekko wyżej) lub spróbuj profilowego ujęcia.', predicate: ()=> scores.chin < 45 },
+    { text: 'Brak wyraźnego konturu żuchwy — lepsze oświetlenie boczne może pomóc.', predicate: ()=> scores.jawline < 60 },
+    { text: 'Linia szczęki widoczna, ale delikatna — delikatny kontrast światła poprawi detal.', predicate: ()=> scores.jawline < 70 },
+    { text: 'Możesz spróbować zdjęcia z bardziej napiętą szyją — poprawi widoczność linii żuchwy.', predicate: ()=> scores.jawline < 65 },
+    { text: 'Kontur żuchwy zasłonięty włosami lub odzieżą — upewnij się, że twarz jest odsłonięta.', predicate: ()=> scores.jawline < 55 },
+    { text: 'Ustawienie głowy może powodować złe odczyty — sprawdź zdjęcie frontalne i profilowe.', predicate: ()=> scores.jawline < 50 },
+    { text: 'Możliwe rozmycie zdjęcia — użyj zdjęcia ostrego, bez ruchu.', predicate: ()=> scores.jawline < 40 },
+    { text: 'Słabe oświetlenie od frontu — popraw oświetlenie, aby lepiej uwidocznić kontury.', predicate: ()=> scores.jawline < 60 }
+  ];
 
-    // ensure image loaded
-    const img = await new Promise((res, rej)=>{
-      const I = new Image(); I.crossOrigin='anonymous';
-      I.onload = ()=>res(I); I.onerror = rej; I.src = previewImg.src;
-    });
+  // 2) faceShape
+  c.faceShape = [
+    { text: 'Kształt twarzy jest mniej wyraźny — spróbuj zdjęcia z neutralnym wyrazem i równym oświetleniem.', predicate: ()=> scores.faceShape < 60 },
+    { text: 'Góra twarzy i dolna część mają podobną szerokość — to wpływa na klasyfikację typu.', predicate: ()=> scores.faceShape < 55 },
+    { text: 'Może brakować kontrastu między kośćmi policzkowymi a szczęką — inne światło pomoże.', predicate: ()=> scores.faceShape < 60 },
+    { text: 'Ujęcie może zniekształcać proporcje (kąt kamery) — spróbuj zdjęcia na wysokości oczu.', predicate: ()=> scores.faceShape < 50 },
+    { text: 'Rozważ profilowe zdjęcie do precyzyjnego rozpoznania kształtu twarzy.', predicate: ()=> scores.faceShape < 55 },
+    { text: 'Jeśli nosisz okulary, mogą wpływać na odczyt kształtu twarzy — spróbuj bez okularów.', predicate: ()=> scores.faceShape < 50 },
+    { text: 'Kształt twarzy wygląda na zaokrąglony — zdjęcie z dłuższą perspektywą (mniejszy zoom) może pomóc.', predicate: ()=> scores.faceShape < 60 },
+    { text: 'Włosy przy twarzy zakrywają kontury — odsuń włosy by odsłonić boki twarzy.', predicate: ()=> scores.faceShape < 55 },
+    { text: 'Słabe topo (brak widoczności kości policzkowych) — popraw oświetlenie boczne.', predicate: ()=> scores.cheekbones < 55 },
+    { text: 'Delikatny kąt kamery może dawać fałszywy odczyt — użyj neutralnej perspektywy.', predicate: ()=> scores.faceShape < 50 }
+  ];
 
-    // scaled canvas for sampling
-    const MAX = 1200;
-    let iw = img.width, ih = img.height;
-    const scale = Math.max(1, Math.max(iw, ih)/MAX);
-    const cw = Math.round(iw/scale), ch = Math.round(ih/scale);
-    const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
-    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
+  // 3) eyes
+  c.eyes = [
+    { text: 'Oczy wydają się mieć niską otwartość — zdjęcie z większym otwarciem oczu poprawi odczyt.', predicate: ()=> scores.eyes < 55 },
+    { text: 'Są lekko blisko osadzone — spróbuj zdjęcia frontalnego bez zmiany pozycji.', predicate: ()=> scores.eyes < 50 },
+    { text: 'Mogą być częściowo przysłonięte (włosy/okulary) — odsłoń oczy.', predicate: ()=> scores.eyes < 60 },
+    { text: 'Hooded / monolid może wpływać na ocenę — zmiana kąta światła może uwypuklić kształt.', predicate: ()=> scores.eyes < 55 },
+    { text: 'Ostry cień lub odblaski na oczach — użyj miękkiego światła, by uniknąć odblasków.', predicate: ()=> scores.eyes < 65 },
+    { text: 'Zbyt duży dystans między oczami — wpływa to na typ (wide-set).', predicate: ()=> scores.eyes < 45 },
+    { text: 'Pogorszone ostrość obrazu oczu — wyraźniejsze zdjęcie doprowadzi do lepszego wyniku.', predicate: ()=> scores.eyes < 50 },
+    { text: 'Ekspresja twarzy (zmrużenie) wpływa na ocenę — spróbuj rozluźnionego wyrazu.', predicate: ()=> scores.eyes < 55 },
+    { text: 'Użyj neutralnego tła — kontrast oczu do tła ułatwia analizę.', predicate: ()=> scores.eyes < 60 },
+    { text: 'Jeśli nosisz makijaż, zmienia on proporcje — spróbuj wersji bez makijażu.', predicate: ()=> scores.eyes < 60 }
+  ];
 
-    let ann = null, box = null;
-    if(ONLINE && meshModel){
-      statusText.textContent = 'Wykrywanie punktów (FaceMesh)...';
+  // 4) jawline (we already have) - but we included many above; skipping duplicate
+
+  // 4) cheekbones
+  c.cheekbones = [
+    { text: 'Kości policzkowe słabo widoczne — dobre boczne oświetlenie pomoże.', predicate: ()=> scores.cheekbones < 55 },
+    { text: 'Policzki wydają się płaskie — inny kąt kamery (lekko z boku) może pokazać profil lepiej.', predicate: ()=> scores.cheekbones < 50 },
+    { text: 'Może być efekt rozmycia skóry — sprawdź ostrość zdjęcia.', predicate: ()=> scores.cheekbones < 45 },
+    { text: 'Upewnij się, że twarz nie jest zbyt rozświetlona od przodu — utrudnia to widoczność kości policzkowych.', predicate: ()=> scores.cheekbones < 60 },
+    { text: 'Odciągnij włosy z boków twarzy by odsłonić kości policzkowe.', predicate: ()=> scores.cheekbones < 60 },
+    { text: 'Lekki profil pomoże wykazać wyraźniejsze kości policzkowe.', predicate: ()=> scores.cheekbones < 55 },
+    { text: 'Jeśli masz makijaż konturujący, postaw na naturalne światło dla rzetelnego odczytu.', predicate: ()=> scores.cheekbones < 60 },
+    { text: 'Zbyt duże zacienienie może ukrywać kości policzkowe — użyj miękkiego, równomiernego światła.', predicate: ()=> scores.cheekbones < 55 },
+    { text: 'Spróbuj zdjęcia bez filtrowania (filtry mogą zaburzać odczyt).', predicate: ()=> scores.cheekbones < 50 },
+    { text: 'Jeśli używasz telefonu, oddal go trochę (mniejszy efekt rybiego oka).', predicate: ()=> scores.cheekbones < 50 }
+  ];
+
+  // 5) symmetry
+  c.symmetry = [
+    { text: 'Twarz wykazuje niewielką asymetrię — upewnij się, że stoi/się prosto.', predicate: ()=> scores.symmetry < 70 },
+    { text: 'Jedna strona twarzy jest nieco wyżej — neutralna pozycja poprawi wynik.', predicate: ()=> scores.symmetry < 65 },
+    { text: 'Asymetria może wynikać z ekspresji — zrób zdjęcie o neutralnym wyrazie.', predicate: ()=> scores.symmetry < 65 },
+    { text: 'Asymetria w ustawieniu głowy (obrót) — ustaw prostą pozycję względem obiektywu.', predicate: ()=> scores.symmetry < 60 },
+    { text: 'Różne oświetlenie po bokach twarzy — wyrównaj światło.', predicate: ()=> scores.symmetry < 60 },
+    { text: 'Małe asymetrie są normalne; jeśli chcesz, zrób więcej zdjęć i porównaj.', predicate: ()=> scores.symmetry < 55 },
+    { text: 'Unikaj skręconej głowy – może to dawać fałszywy wynik.', predicate: ()=> scores.symmetry < 60 },
+    { text: 'Sprawdź, czy aparat był równo ustawiony (poziom).', predicate: ()=> scores.symmetry < 60 },
+    { text: 'Upewnij się, że nie ma obcinania jednej strony twarzy przez kadr.', predicate: ()=> scores.symmetry < 50 },
+    { text: 'Jeśli masz poważną asymetrię, rozważ dokumentację medyczną — tutaj to tylko wskazówka.', predicate: ()=> scores.symmetry < 40 }
+  ];
+
+  // 6) skin
+  c.skin = [
+    { text: 'Skóra wykazuje teksturę — popraw oświetlenie i nawilżenie.', predicate: ()=> scores.skin < 65 },
+    { text: 'Widoczne plamki/załamania koloru — użyj równomiernego światła i ewentualnie korekty.', predicate: ()=> scores.skin < 60 },
+    { text: 'Zdjęcie wykazuje ziarno — lepsza jakość aparatu/większe światło poprawi wynik.', predicate: ()=> scores.skin < 55 },
+    { text: 'Cienie i odbicia wpływają na odczyt — miękkie światło będzie lepsze.', predicate: ()=> scores.skin < 60 },
+    { text: 'Skóra wygląda na przesuszoną — nawilżenie poprawi wygląd.', predicate: ()=> scores.skin < 60 },
+    { text: 'Jeśli masz makijaż kryjący, usuń go dla rzetelniejszej oceny.', predicate: ()=> scores.skin < 55 },
+    { text: 'Użyj neutralnego tła — kontrast tła wpływa na próbki skóry.', predicate: ()=> scores.skin < 60 },
+    { text: 'Unikaj filtrów obrazów — mogą sztucznie wygładzać skórę.', predicate: ()=> scores.skin < 60 },
+    { text: 'Kilka plików z różnym oświetleniem pozwoli porównać wyniki.', predicate: ()=> scores.skin < 55 },
+    { text: 'Skoncentruj analizę na środkowych partiach twarzy (czoło, policzki).', predicate: ()=> scores.skin < 50 }
+  ];
+
+  // 7) proportions
+  c.proportions = [
+    { text: 'Proporcje twarzy są nieoptymalne według klasycznych reguł — spróbuj neutralnego ujęcia.', predicate: ()=> scores.proportions < 65 },
+    { text: 'Dolna część twarzy może być za wysoka/niska — spróbuj zdjęcia frontalnego bez przekręcania głowy.', predicate: ()=> scores.proportions < 60 },
+    { text: 'Upewnij się, że nos i usta są dobrze widoczne — zasłonięcie zmienia proporcje.', predicate: ()=> scores.proportions < 60 },
+    { text: 'Różne kąty fotografowania wpływają na proporcje — trzymaj aparat na wysokości oczu.', predicate: ()=> scores.proportions < 55 },
+    { text: 'Naturalna mimika (bez uśmiechu) daje najrzetelniejsze proporcje.', predicate: ()=> scores.proportions < 60 },
+    { text: 'Filtry mogą zmieniać proporcje twarzy — użyj surowego zdjęcia.', predicate: ()=> scores.proportions < 55 },
+    { text: 'Jeśli masz brodę, może ona zaburzać proporcje — spróbuj wersji bez lub z przystrzyżoną brodą.', predicate: ()=> scores.proportions < 55 },
+    { text: 'Utrzymaj neutralne wycięcie kadru (nie obcinaj czoła ani podbródka).', predicate: ()=> scores.proportions < 55 },
+    { text: 'Kilka ujęć z różnymi kątami pomoże znaleźć najlepsze proporcje.', predicate: ()=> scores.proportions < 50 },
+    { text: 'Jeśli nosisz okulary, spróbuj wersji bez nich — mogą wpływać na proporcje.', predicate: ()=> scores.proportions < 55 }
+  ];
+
+  // 8) chin
+  c.chin = [
+    { text: 'Broda mogłaby być bardziej wysunięta — profilowe ujęcie pomoże potwierdzić.', predicate: ()=> scores.chin < 55 },
+    { text: 'Widoczność podbródka jest niska — użyj zdjęcia z mniejszym zoomem.', predicate: ()=> scores.chin < 50 },
+    { text: 'Cień pod brodą zniekształca odczyt — popraw oświetlenie.', predicate: ()=> scores.chin < 55 },
+    { text: 'Jeśli masz włosy lub zarost przy brodzie — odsuń je by odsłonić kontur.', predicate: ()=> scores.chin < 60 },
+    { text: 'Delikatne napięcie szyi może poprawić profil brody na zdjęciu.', predicate: ()=> scores.chin < 60 },
+    { text: 'Upewnij się, że kadr nie obcina dolnej części twarzy.', predicate: ()=> scores.chin < 50 },
+    { text: 'Profilowe zdjęcie ujawnia projekcję brody — warto porównać.', predicate: ()=> scores.chin < 55 },
+    { text: 'Rozważ zdjęcie przy słabym kontraście by uniknąć ostrych cieni.', predicate: ()=> scores.chin < 55 },
+    { text: 'Jeśli masz "podwójny podbródek" na zdjęciu, spróbuj innego kąta.', predicate: ()=> scores.chin < 45 },
+    { text: 'Zdjęcie powinno być wyraźne (ostre) — rozmycie zaniża wynik.', predicate: ()=> scores.chin < 50 }
+  ];
+
+  // 9) ratio
+  c.ratio = [
+    { text: 'Stosunek szerokości do wysokości twarzy może być poprawiony — spróbuj zdjęcia frontalnego.', predicate: ()=> scores.ratio < 60 },
+    { text: 'Zbyt szeroka/taka twarz może wpływać na ocenę — inny kąt pomoże.', predicate: ()=> scores.ratio < 55 },
+    { text: 'Upewnij się, że zdjęcie nie jest zbyt blisko (efekt rybiego oka).', predicate: ()=> scores.ratio < 55 },
+    { text: 'Dłuższe ujęcie (mniejszy zoom) poprawi proporcje obrazu.', predicate: ()=> scores.ratio < 55 },
+    { text: 'Sprawdź, czy zdjęcie nie jest obcięte od góry lub dołu — to zniekształca ratio.', predicate: ()=> scores.ratio < 50 },
+    { text: 'Jeżeli chcesz, wykonaj zdjęcie w naturalnym świetle bez filtrów.', predicate: ()=> scores.ratio < 55 },
+    { text: 'Porównaj kilka zdjęć w różnych proporcjach by znaleźć najlepszą wersję.', predicate: ()=> scores.ratio < 50 },
+    { text: 'Użyj neutralnego tła, by ułatwić odnalezienie krawędzi twarzy.', predicate: ()=> scores.ratio < 60 },
+    { text: 'Korekta kadrowania (zostaw czoło i podbródek) poprawi odczyt.', predicate: ()=> scores.ratio < 55 },
+    { text: 'Nie używaj panoramicznych kadrów — zaburzają proporcje.', predicate: ()=> scores.ratio < 50 }
+  ];
+
+  // 10) overall (general suggestions)
+  c.overall = [
+    { text: 'Ogólnie: spróbuj wykonać zdjęcie przy naturalnym, miękkim świetle (np. rano).', predicate: ()=> (scores.overall||0) < 70 },
+    { text: 'Ogólnie: postaraj się o neutralny wyraz twarzy (bez szerokiego uśmiechu).', predicate: ()=> (scores.overall||0) < 75 },
+    { text: 'Ogólnie: sprawdź zdjęcie bez filtrów i bez mocnego makijażu.', predicate: ()=> (scores.overall||0) < 75 },
+    { text: 'Ogólnie: zrób kilka zdjęć z różnym oświetleniem i wybierz najlepsze.', predicate: ()=> (scores.overall||0) < 80 },
+    { text: 'Ogólnie: usuń elementy zasłaniające (okulary, włosy, maski).', predicate: ()=> (scores.overall||0) < 70 },
+    { text: 'Ogólnie: krótszy zoom i kadr od klatki piersiowej w górę działa zwykle lepiej.', predicate: ()=> (scores.overall||0) < 75 },
+    { text: 'Ogólnie: jeśli chcesz, zachowaj raport JSON do porównań w przyszłości.', predicate: ()=> (scores.overall||0) < 100 },
+    { text: 'Ogólnie: użyj neutralnego tła, unikaj silnych cieni.', predicate: ()=> (scores.overall||0) < 75 },
+    { text: 'Ogólnie: dbaj o regularne nawilżenie skóry – to poprawia ocenę skin quality.', predicate: ()=> scores.skin < 70 },
+    { text: 'Ogólnie: jeśli chcesz precyzji medycznej, skonsultuj się ze specjalistą.', predicate: ()=> (scores.overall||0) < 40 }
+  ];
+
+  return c;
+}
+
+/* function to verify candidate suggestions:
+   - for each candidate: run predicate
+   - if false: re-evaluate relevant metric(s) once and test again
+   - keep confirmed ones
+*/
+async function verifySuggestions(ann, box, ctx, scaledBox, scores){
+  rawSuggestionCandidates = buildSuggestionCandidates(ann,box,ctx,scaledBox,scores);
+  improvementSuggestions = {}; // reset
+  // For each category, test each candidate
+  for(const cat of Object.keys(rawSuggestionCandidates)){
+    improvementSuggestions[cat] = [];
+    const arr = rawSuggestionCandidates[cat];
+    for(const cand of arr){
       try{
-        const preds = await meshModel.estimateFaces({ input: img, returnTensors:false, predictIrises:false });
-        if(preds && preds.length){
-          const p = preds[0];
-          ann = p.annotations || {};
-          const mesh = p.scaledMesh || [];
-          if(p.boundingBox && p.boundingBox.topLeft && p.boundingBox.bottomRight){
-            const tl = p.boundingBox.topLeft, br = p.boundingBox.bottomRight;
-            box = { x: tl[0], y: tl[1], width: br[0]-tl[0], height: br[1]-tl[1] };
-          } else if(mesh.length){
-            box = meshBox(mesh);
+        let ok = false;
+        try{ ok = !!cand.predicate(); }catch(e){ ok=false; }
+        if(!ok){
+          // re-evaluate metric(s) related to category (call scoring functions again)
+          // small sleep to ensure not blocking UI
+          await new Promise(r=>setTimeout(r,120));
+          // recompute relevant score(s)
+          const recomputed = await recomputeCategory(cat, ann, box, ctx, scaledBox);
+          // update scores mapping
+          if(recomputed !== null){
+            scores[cat] = recomputed;
           }
+          // re-run predicate (some predicates use scores map)
+          try{ ok = !!cand.predicate(); }catch(e){ ok=false; }
         }
+        if(ok){
+          improvementSuggestions[cat].push(cand.text);
+        }
+        // cap to 10 suggestions per category
+        if(improvementSuggestions[cat].length >= 10) break;
       }catch(e){
-        console.warn('FaceMesh detect error', e);
-        ann = null; box = null;
+        console.warn('candidate verify error', e);
       }
     }
+  }
+  return improvementSuggestions;
+}
 
-    if(!box){
-      // heuristics: center box, then refine by skin mask
-      box = { x: cw*0.18, y: ch*0.12, width: cw*0.64, height: ch*0.76 };
-      try{
-        const data = ctx.getImageData(0,0,cw,ch).data;
-        let minX=cw,minY=ch,maxX=0,maxY=0,count=0;
-        for(let y=0;y<ch;y++){
-          for(let x=0;x<cw;x++){
-            const i = (y*cw + x)*4; const r=data[i], g=data[i+1], b=data[i+2];
-            const cond = (r>95 && g>40 && b>20 && r>g && r>b && (r-g)>15);
-            if(cond){ count++; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y; }
-          }
-        }
-        if(count>50){ box = { x:minX, y:minY, width: Math.max(6, maxX-minX), height: Math.max(6, maxY-minY) }; }
-      }catch(e){}
+/* recomputeCategory performs a focused recompute of a category and returns numeric value or null */
+async function recomputeCategory(cat, ann, box, ctx, scaledBox){
+  try{
+    switch(cat){
+      case 'jawline': return jaw_score(ann,box);
+      case 'faceShape': return faceShape_score(ann,box);
+      case 'eyes': return Math.round(mean([eyes_mA(ann,box), eyes_mB(ann,box), eyes_mC(ann,box)]));
+      case 'cheekbones': return cheek_score(ann,box);
+      case 'symmetry': return sym_score(ann,box);
+      case 'skin': return skin_score(ctx, scaledBox);
+      case 'proportions': return Math.round(mean(proportions_methods_ann(ann,box)));
+      case 'chin': return Math.round(mean(chin_methods_ann(ann,box)));
+      case 'ratio': return Math.round(mean(ratio_methods_ann(ann,box)));
+      case 'overall': {
+        // recompute all and overall
+        const recomputedScores = {
+          faceShape: faceShape_score(ann,box),
+          jawline: jaw_score(ann,box),
+          eyes: Math.round(mean([eyes_mA(ann,box), eyes_mB(ann,box), eyes_mC(ann,box)])),
+          cheekbones: cheek_score(ann,box),
+          symmetry: sym_score(ann,box),
+          skin: skin_score(ctx, scaledBox),
+          proportions: Math.round(mean(proportions_methods_ann(ann,box))),
+          chin: Math.round(mean(chin_methods_ann(ann,box))),
+          ratio: Math.round(mean(ratio_methods_ann(ann,box)))
+        };
+        return computeOverall(recomputedScores);
+      }
+      default: return null;
     }
+  }catch(e){ console.warn('recompute error', e); return null; }
+}
 
-    // coordinates are image-based; scale box to canvas coords
-    const scaledBox = { x: box.x * (cw / img.width || 1), y: box.y * (ch / img.height || 1), width: (box.width || cw) * (cw / img.width || 1), height: (box.height || ch) * (ch / img.height || 1) };
+/* ---------- Main analyze flow (BlazeFace-first detection) ---------- */
+async function analyzeFile(file){
+  resultsGrid.innerHTML = '';
+  savedNotice.textContent = '';
+  analysisResults = null;
+  improvementSuggestions = {};
+  rawSuggestionCandidates = {};
 
-    // compute each category using ann if present else offline methods
+  if(!file || !file.type.startsWith('image/')){ statusEl.textContent = 'Wybierz plik obrazkowy.'; return; }
+  statusEl.textContent = 'Przygotowanie obrazu...';
+  previewImg.src = URL.createObjectURL(file);
+  previewImg.style.display = 'block';
+  hint.style.display = 'none';
+  uploadLabel.style.display = 'none';
+  fileInput.style.display = 'none';
+  changeBtn.style.display = 'inline-block';
+
+  // load image
+  const img = await new Promise((res, rej)=>{
+    const I = new Image(); I.crossOrigin='anonymous';
+    I.onload = ()=> res(I); I.onerror = rej; I.src = previewImg.src;
+  }).catch(e=>{ statusEl.textContent = 'Błąd ładowania obrazu.'; throw e; });
+
+  // scaled canvas for skin sampling
+  const MAX = 1200;
+  let iw = img.width, ih = img.height;
+  const scale = Math.max(1, Math.max(iw, ih)/MAX);
+  const cw = Math.round(iw/scale), ch = Math.round(ih/scale);
+  const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
+  const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
+
+  let detectedBox = null;
+  // 1) BlazeFace detection (must detect)
+  if(ONLINE && blazefaceModel){
+    statusEl.textContent = 'Wykrywanie twarzy (BlazeFace)...';
+    try{
+      const preds = await blazefaceModel.estimateFaces(img, false);
+      if(preds && preds.length){
+        const p = preds[0];
+        const tl = Array.isArray(p.topLeft) ? p.topLeft : (p.topLeft?.arraySync ? p.topLeft.arraySync() : [0,0]);
+        const br = Array.isArray(p.bottomRight) ? p.bottomRight : (p.bottomRight?.arraySync ? p.bottomRight.arraySync() : [0,0]);
+        const sx = tl[0] * (cw / img.width), sy = tl[1] * (ch / img.height);
+        const sw = Math.max(6, (br[0] - tl[0]) * (cw / img.width)), sh = Math.max(6, (br[1] - tl[1]) * (ch / img.height));
+        detectedBox = { x: sx, y: sy, width: sw, height: sh };
+      } else {
+        statusEl.textContent = 'Nie wykryto twarzy — spróbuj przesłać frontalne zdjęcie.';
+        uploadLabel.style.display = 'inline-block';
+        fileInput.style.display = 'inline-block';
+        changeBtn.style.display = 'none';
+        previewImg.style.display = 'block';
+        return; // STOP: no face
+      }
+    }catch(e){
+      console.warn('BlazeFace error', e);
+      statusEl.textContent = 'Błąd wykrywania twarzy — spróbuj ponownie.';
+      uploadLabel.style.display = 'inline-block';
+      fileInput.style.display = 'inline-block';
+      changeBtn.style.display = 'none';
+      return;
+    }
+  } else {
+    // offline heuristic detection
+    statusEl.textContent = 'Wykrywanie twarzy (heurystyka)...';
+    try{
+      let minX=cw, minY=ch, maxX=0, maxY=0, count=0;
+      const data = ctx.getImageData(0,0,cw,ch).data;
+      for(let y=0;y<ch;y+=2){
+        for(let x=0;x<cw;x+=2){
+          const i = (y*cw + x)*4; const r=data[i], g=data[i+1], b=data[i+2];
+          const cond = (r>95 && g>40 && b>20 && r>g && r>b && (r-g)>15);
+          if(cond){ count++; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y; }
+        }
+      }
+      if(count > 50) detectedBox = { x:minX, y:minY, width: Math.max(6, maxX-minX), height: Math.max(6, maxY-minY) };
+      else { statusEl.textContent = 'Nie wykryto twarzy (heurystyka).'; uploadLabel.style.display='inline-block'; fileInput.style.display='inline-block'; changeBtn.style.display='none'; return; }
+    }catch(e){ statusEl.textContent='Błąd detekcji'; uploadLabel.style.display='inline-block'; fileInput.style.display='inline-block'; changeBtn.style.display='none'; return; }
+  }
+
+  // 2) FaceMesh for landmarks
+  let ann = null, box = null;
+  if(ONLINE && meshModel){
+    statusEl.textContent = 'Wykrywanie punktów (FaceMesh)...';
+    try{
+      const preds = await meshModel.estimateFaces({ input: img, returnTensors:false, predictIrises:false });
+      if(preds && preds.length){
+        const p = preds[0];
+        ann = p.annotations || p;
+        ann.scaledMesh = p.scaledMesh || p;
+        if(p.boundingBox && p.boundingBox.topLeft && p.boundingBox.bottomRight){
+          const tl = p.boundingBox.topLeft, br = p.boundingBox.bottomRight;
+          box = { x: tl[0] * (cw / img.width), y: tl[1] * (ch / img.height), width: (br[0]-tl[0]) * (cw / img.width), height: (br[1]-tl[1]) * (ch / img.height) };
+        } else {
+          box = detectedBox || meshBox(ann.scaledMesh || ann) || detectedBox;
+        }
+      } else {
+        ann = null;
+        box = detectedBox;
+      }
+    }catch(e){
+      console.warn('FaceMesh error', e);
+      ann = null;
+      box = detectedBox;
+    }
+  } else {
+    ann = null;
+    box = detectedBox;
+  }
+
+  const scaledBox = { x: box.x || 0, y: box.y || 0, width: box.width || cw, height: box.height || ch };
+
+  try{
+    // compute scores
     const scores = {};
-    const fs = ann ? faceShape_methods_ann(ann, box) : faceShape_methods_off(box, ctx); scores.faceShape = Math.round(mean(fs));
-    const es = ann ? eyes_methods_ann(ann, box) : eyes_methods_off(box, ctx); scores.eyes = Math.round(mean(es));
-    const js = ann ? jaw_methods_ann(ann, box) : jaw_methods_off(box, ctx); scores.jawline = Math.round(mean(js));
-    const cs = ann ? cheek_methods_ann(ann, box) : cheek_methods_off(box, ctx); scores.cheekbones = Math.round(mean(cs));
-    const ss = ann ? symmetry_methods_ann(ann, box) : symmetry_methods_off(box, ctx); scores.symmetry = Math.round(mean(ss));
-    const sk = skin_methods_canvas(ctx, scaledBox); scores.skin = Math.round(mean(sk));
-    const ps = ann ? proportions_methods_ann(ann, box) : proportions_methods_off(box, ctx); scores.proportions = Math.round(mean(ps));
-    const chn = ann ? chin_methods_ann(ann, box) : chin_methods_off(box, ctx); scores.chin = Math.round(mean(chn));
-    const rts = ann ? ratio_methods_ann(ann, box) : ratio_methods_off(box, ctx); scores.ratio = Math.round(mean(rts));
-
-    for(const k in scores) scores[k] = clamp(Math.round(scores[k]||0), 0,100);
+    scores.faceShape = faceShape_score(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch});
+    scores.jawline = jaw_score(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch});
+    scores.eyes = Math.round(mean([eyes_mA(ann||{},box||{}), eyes_mB(ann||{},box||{}), eyes_mC(ann||{},box||{})]));
+    const eyeType = mapEyeType(ann||{}, box||{});
+    scores.cheekbones = cheek_score(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch});
+    scores.symmetry = sym_score(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch});
+    scores.skin = skin_score(ctx, scaledBox);
+    scores.proportions = Math.round(mean(proportions_methods_ann(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch})));
+    scores.chin = Math.round(mean(chin_methods_ann(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch})));
+    scores.ratio = Math.round(mean(ratio_methods_ann(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch})));
     const overall = computeOverall(scores);
+    scores.overall = overall;
 
-    const faceShapeName = mapFace(scores.faceShape);
-    const eyeTypeName = mapEye(scores.eyes);
+    // store results for export
+    analysisResults = {
+      timestamp: new Date().toISOString(),
+      scores,
+      eyeType,
+      faceShape: detectFaceShape(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch})
+    };
 
-    // prepare order and render (vertical)
+    // generate candidate suggestions and then verify them (with re-evaluation if needed)
+    statusEl.textContent = 'Generuję sugestie i weryfikuję je...';
+    const verified = await verifySuggestions(ann||{}, {x:box.x||0,y:box.y||0,width:box.width||cw,height:box.height||ch}, ctx, scaledBox, scores);
+
+    // render results + suggestions
+    resultsGrid.innerHTML = '';
     const order = [
-      {k:'faceShape', label:`Face Shape: ${faceShapeName}`, subtitle:'(typ twarzy)', val: scores.faceShape},
-      {k:'eyes', label:`Eyes: ${eyeTypeName}`, subtitle:'(typ oczu)', val: scores.eyes},
-      {k:'jawline', label:'Jawline', subtitle:'(sylwetka szczęki)', val: scores.jawline},
-      {k:'cheekbones', label:'Cheekbones', subtitle:'(kości policzkowe)', val: scores.cheekbones},
-      {k:'symmetry', label:'Symmetry', subtitle:'(symetria)', val: scores.symmetry},
-      {k:'skin', label:'Skin Quality', subtitle:'(jakość skóry)', val: scores.skin},
-      {k:'proportions', label:'Proportions', subtitle:'(proporcje twarzy)', val: scores.proportions},
-      {k:'chin', label:'Chin Ratio', subtitle:'(podbródek)', val: scores.chin},
-      {k:'ratio', label:'Face Ratio', subtitle:'(stosunek szer./wys.)', val: scores.ratio},
-      {k:'overall', label:'Overall', subtitle:'(średnia ważona)', val: overall}
+      {k:'faceShape', label:`Face Shape: ${analysisResults.faceShape}`, val:scores.faceShape},
+      {k:'eyes', label:`Eyes: ${analysisResults.eyeType}`, val:scores.eyes},
+      {k:'jawline', label:'Jawline', val:scores.jawline},
+      {k:'cheekbones', label:'Cheekbones', val:scores.cheekbones},
+      {k:'symmetry', label:'Symmetry', val:scores.symmetry},
+      {k:'skin', label:'Skóra', val:scores.skin},
+      {k:'proportions', label:'Proportions', val:scores.proportions},
+      {k:'chin', label:'Chin Ratio', val:scores.chin},
+      {k:'ratio', label:'Face Ratio', val:scores.ratio},
+      {k:'overall', label:'Overall', val:scores.overall}
     ];
 
-    resultsGrid.innerHTML = '';
-    const cardNodes = order.map(it => {
-      const { row, ring } = createRow(it.label, it.subtitle, it.val);
+    // create nodes and attach suggestion bubbles
+    const nodes = order.map(it=>{
+      const { row, ring, v, text, labelEl } = createRow(it.label, '');
       resultsGrid.appendChild(row);
+      // suggestions list
+      const sugContainer = document.createElement('div'); sugContainer.className = 'suggestions';
+      const catList = verified[it.k] || [];
+      if(catList.length === 0){
+        // show a neutral hint
+        const p = document.createElement('div'); p.className='suggestion-item'; p.textContent = 'Brak istotnych sugestii — wszystko OK.';
+        sugContainer.appendChild(p);
+      } else {
+        catList.slice(0,10).forEach(sg=>{
+          const p = document.createElement('div'); p.className='suggestion-item'; p.textContent = '• ' + sg;
+          sugContainer.appendChild(p);
+        });
+      }
+      row.appendChild(sugContainer);
       return { ring, value: it.val };
     });
 
     // animate sequentially
-    for(let i=0;i<cardNodes.length;i++){
-      await new Promise(r=>setTimeout(r, i===0?120:300));
-      await animateRing(cardNodes[i].ring, cardNodes[i].value);
+    for(let i=0;i<nodes.length;i++){
+      await new Promise(r=>setTimeout(r, i===0?120:260));
+      await animateRing(nodes[i].ring, nodes[i].value);
     }
 
-    statusText.textContent = 'Analiza zakończona ✅';
-    modeNote.textContent = ONLINE ? 'Tryb: ONLINE (FaceMesh)' : 'Tryb: OFFLINE (heurystyki)';
+    statusEl.textContent = 'Analiza zakończona ✅';
+    modeNote.textContent = ONLINE ? 'Tryb: ONLINE (BlazeFace + FaceMesh)' : 'Tryb: OFFLINE (heurystyki)';
     footerMsg.textContent = `FaceShapes: ${FACE_SHAPES.join(', ')} • EyeTypes: ${EYE_TYPES.join(', ')}`;
 
-    lastResults = { timestamp: new Date().toISOString(), mode: ONLINE?'online':'offline', scores, faceShapeName, eyeTypeName };
+    // keep analysisResults and improvementSuggestions for export
+    improvementSuggestions = verified;
+    analysisResults.raw = { detectedBox, faceBox: box };
+    analysisResults.imageSize = { width: img.width, height: img.height };
+
+  }catch(err){
+    console.error('Scoring error', err);
+    statusEl.textContent = 'Błąd podczas analizy: ' + (err.message || err);
   }
+}
 
-  // ---------- Events ----------
-  uploadLabel.addEventListener('click', ()=> fileInput.click());
-  fileInput.addEventListener('change', async (e)=>{
-    const f = e.target.files && e.target.files[0];
-    if(!f){ statusText.textContent = 'Nie wybrano pliku.'; return; }
-    if(!READY){
-      statusText.textContent = 'Modele się ładują — krótka chwila...';
-      const waitUntil = Date.now() + 6000;
-      while(!READY && Date.now() < waitUntil) await new Promise(r=>setTimeout(r,200));
+/* ---------- Events ---------- */
+uploadLabel.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f){ statusEl.textContent = 'Nie wybrano pliku.'; return; }
+  if(!READY){
+    statusEl.textContent = 'Modele się ładują — proszę chwilę poczekać...';
+    const waitUntil = Date.now() + 7000;
+    while(!READY && Date.now() < waitUntil) await new Promise(r=>setTimeout(r,200));
+  }
+  try{
+    statusEl.textContent = 'Rozpoczynam analizę...';
+    await analyzeFile(f);
+  }catch(e){
+    console.error(e);
+    statusEl.textContent = 'Błąd: ' + (e.message || e);
+  }
+});
+
+changeBtn.addEventListener('click', ()=>{
+  previewImg.src=''; previewImg.style.display='none';
+  hint.style.display='block';
+  fileInput.value=''; fileInput.style.display='inline-block';
+  uploadLabel.style.display='inline-block';
+  changeBtn.style.display='none';
+  resultsGrid.innerHTML=''; statusEl.textContent='Wybierz zdjęcie.';
+  savedNotice.textContent='';
+});
+
+/* ---------- Save report (JSON / TXT) ---------- */
+saveReportBtn.addEventListener('click', ()=>{
+  if(!analysisResults){ savedNotice.style.color='orange'; savedNotice.textContent='Brak wyników — najpierw przeprowadź analizę.'; return; }
+  const data = {
+    timestamp: analysisResults.timestamp,
+    imageSize: analysisResults.imageSize,
+    scores: analysisResults.scores || analysisResults.scores,
+    faceShape: analysisResults.faceShape,
+    eyeType: analysisResults.eyeType,
+    suggestions: improvementSuggestions,
+    raw: analysisResults.raw || {}
+  };
+
+  const choice = confirm('Zapisz jako JSON? (OK = JSON, Anuluj = czytelny TXT)');
+  if(choice){
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `face_report_${Date.now()}.json`;
+    link.click();
+    savedNotice.style.color='lightgreen';
+    savedNotice.textContent = 'Raport JSON wygenerowany. Plik pobrany.';
+  } else {
+    let text = '🔥 Raport Face Analyzer 🔥\n\n';
+    text += `Data: ${new Date(analysisResults.timestamp).toLocaleString()}\n\n`;
+    const sc = analysisResults.scores || analysisResults.scores;
+    for(const k of ['faceShape','eyeType','jawline','cheekbones','symmetry','skin','proportions','chin','ratio','overall']){
+      if(k === 'faceShape') text += `Face Shape: ${analysisResults.faceShape}\n`;
+      else if(k === 'eyeType') text += `Eyes: ${analysisResults.eyeType}\n`;
+      else text += `${k}: ${sc[k] ?? (analysisResults.scores && analysisResults.scores[k]) ?? '—'}\n`;
     }
-    try{ await analyzeFile(f); } catch(err){ console.error(err); statusText.textContent = 'Błąd analizy.'; }
-  });
+    text += '\nSugestie:\n';
+    for(const cat of Object.keys(improvementSuggestions)){
+      const arr = improvementSuggestions[cat];
+      if(!arr || !arr.length) continue;
+      text += `\n${cat.toUpperCase()}:\n`;
+      arr.forEach((s,idx)=> text += `  ${idx+1}. ${s}\n`);
+    }
+    const blob = new Blob([text], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `face_report_${Date.now()}.txt`;
+    link.click();
+    savedNotice.style.color='lightgreen';
+    savedNotice.textContent = 'Raport TXT wygenerowany. Plik pobrany.';
+  }
+});
 
-  changeBtn.addEventListener('click', ()=>{
-    previewImg.src=''; previewImg.style.display='none';
-    hint.style.display='block';
-    fileInput.value=''; fileInput.style.display='inline-block';
-    uploadLabel.style.display='inline-block';
-    changeBtn.style.display='none';
-    resultsGrid.innerHTML=''; statusText.textContent='Wybierz zdjęcie.'; lastResults=null;
-  });
-
-})(); // IIFE
+/* End of script */
 </script>
 </body>
 </html>
 
- <style>
-/* Ustawienie całego układu w kolumnie (pionowo) */
-body {
-  display: flex;
-  flex-direction: column; /* wszystko jedno pod drugim */
-  align-items: center; /* wyśrodkowanie na środku ekranu */
-  justify-content: flex-start;
-  background-color: #0b0b0b;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
 
-/* Styl automatu – pozostaje na górze */
-#automat {
-  width: 100%;
-  text-align: center;
-  margin-top: 40px;
-  margin-bottom: 80px; /* duży odstęp pod automatem */
-}
-
-/* Face Analyzer – całość w osobnym bloku pod automatem */
-#face-analyzer {
-  width: 95%;
-  max-width: 900px;
-  margin: 0 auto;
-  display: block;
-  position: relative;
-  background: radial-gradient(circle at top, #1a0000, #000);
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
-}
-
-/* Zapobiega ułożeniu obok siebie */
-#automat, #face-analyzer {
-  display: block;
-  float: none;
-  clear: both;
-}
-
-/* Na mniejszych ekranach – pełna szerokość */
-@media (max-width: 768px) {
-  #face-analyzer {
-    width: 100%;
-    margin: 0 10px;
-    padding: 15px;
-  }
-}
-</style>
-
-<body>
-
-  <!-- Twój Face Analyzer (cały jego skrypt tutaj) -->
-  <div id="face-analyzer">
-    <!-- TU WKLEJ CAŁY KOD FACE ANALYZERA -->
-  </div>
-</body>
 
 
 
