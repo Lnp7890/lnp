@@ -1507,3 +1507,559 @@ saveReportBtn.addEventListener('click', ()=>{
 
 
 
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Osobowości</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
+  #quiz-container { margin-bottom: 20px; }
+  .question { font-weight: bold; margin-bottom: 10px; }
+  .options button { display: block; margin: 5px 0; padding: 10px; width: 100%; }
+  #results { display: none; }
+  #overallDesc { margin-top: 20px; font-weight: bold; font-size: 1.2em; }
+</style>
+</head>
+<body>
+
+<h1>Quiz Osobowości</h1>
+<div id="quiz-container">
+  <div id="question-text" class="question"></div>
+  <div class="options" id="options-container"></div>
+</div>
+
+<div id="results">
+  <h2>Twoje wyniki</h2>
+  <canvas id="resultsChart" width="700" height="400"></canvas>
+  <div id="overallDesc"></div>
+</div>
+
+<script>
+const quizData = [
+  // --------------------
+  // 1. SPOSÓB MYŚLENIA - 10 pytań
+  {category:'Sposób myślenia', question:'Jak reagujesz w stresie?', options:[
+    {text:'Zamykam się w sobie', points:0},
+    {text:'Próbuję zrozumieć emocje', points:3},
+    {text:'Staram się wpłynąć na sytuację', points:8},
+    {text:'Analizuję i planuję logicznie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak rozwiązujesz problemy?', options:[
+    {text:'Nie radzę sobie', points:0},
+    {text:'Próbuję intuicyjnie', points:3},
+    {text:'Stosuję różne strategie', points:8},
+    {text:'Używam analizy i logiki', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak reagujesz na konflikty?', options:[
+    {text:'Unikam', points:0},
+    {text:'Czasem ulegam emocjom', points:3},
+    {text:'Próbuję rozwiązać', points:8},
+    {text:'Analizuję i planuję strategię', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak radzisz sobie ze stresem?', options:[
+    {text:'Źle', points:0},
+    {text:'Średnio', points:3},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak podejmujesz decyzje?', options:[
+    {text:'Emocjonalnie', points:0},
+    {text:'Częściowo logicznie', points:3},
+    {text:'Przeważnie logicznie', points:8},
+    {text:'Zawsze logicznie i przemyślanie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Czy planujesz przyszłość?', options:[
+    {text:'Nie', points:0},
+    {text:'Czasami', points:3},
+    {text:'Przeważnie', points:8},
+    {text:'Zawsze szczegółowo', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Czy próbujesz czasem wpłynąć na innych?', options:[
+    {text:'Nigdy', points:0},
+    {text:'Rzadko', points:3},
+    {text:'Często', points:8},
+    {text:'Zawsze przemyślanie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak analizujesz sytuacje?', options:[
+    {text:'Nie analizuję', points:0},
+    {text:'Czasami', points:3},
+    {text:'Przeważnie', points:8},
+    {text:'Zawsze dokładnie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Czy wykorzystujesz okazje by osiągnąć cele?', options:[
+    {text:'Nigdy', points:0},
+    {text:'Czasem', points:3},
+    {text:'Często', points:8},
+    {text:'Zawsze przemyślanie', points:10}
+  ]},
+  {category:'Sposób myślenia', question:'Jak szybko uczysz się nowych rzeczy?', options:[
+    {text:'Bardzo wolno', points:0},
+    {text:'Wolno', points:3},
+    {text:'Szybko', points:8},
+    {text:'Bardzo szybko i efektywnie', points:10}
+  ]},
+
+  // --------------------
+  // 2. SIŁA - 10 pytań
+  {category:'Siła', question:'Ile robisz pompek?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50 lub skomplikowane', points:6.4},
+    {text:'Serie jednoręczne', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile serii robisz na siłowni?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50 lub skomplikowane', points:6.4},
+    {text:'Serie jednoręczne', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile podciągnięć robisz?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50 lub trudne', points:6.4},
+    {text:'Serie ekstremalne', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile przysiadów robisz?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'100+', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile kilometrów biegniesz?', options:[
+    {text:'0', points:1.0},
+    {text:'2', points:3.2},
+    {text:'10', points:6.4},
+    {text:'20+', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile planków robisz?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'100+', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile kg podnosisz w martwym ciągu?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'100+', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile pompek w serii?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'Serie jednoręczne', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile przysiadów z ciężarem?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'100+', points:10.0}
+  ]},
+  {category:'Siła', question:'Ile serii podciągnięć robisz?', options:[
+    {text:'0', points:1.0},
+    {text:'10', points:3.2},
+    {text:'50', points:6.4},
+    {text:'Serie ekstremalne', points:10.0}
+  ]},
+
+  // --------------------
+  // 3. WIARA - 10 pytań
+  {category:'Wiara', question:'Jaki jest Twój światopogląd?', options:[
+    {text:'Chrześcijaństwo', points:4},
+    {text:'Inne', points:5},
+    {text:'Ateizm', points:6},
+    {text:'Satanizm', points:10}
+  ]},
+  {category:'Wiara', question:'Czy praktykujesz religię codziennie?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasami', points:5},
+    {text:'Rzadko', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy ufasz swoim wierzeniom?', options:[
+    {text:'Nie', points:4},
+    {text:'Trochę', points:5},
+    {text:'Średnio', points:6},
+    {text:'Całkowicie', points:10}
+  ]},
+  {category:'Wiara', question:'Czy modlisz się?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasem', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy czytasz literaturę religijną?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasem', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy uczestniczysz w obrzędach?', options:[
+    {text:'Nie', points:4},
+    {text:'Rzadko', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy dyskutujesz o wierzeniach?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasem', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy wierzysz w życie pozagrobowe?', options:[
+    {text:'Nie', points:4},
+    {text:'Trochę', points:5},
+    {text:'Średnio', points:6},
+    {text:'Całkowicie', points:10}
+  ]},
+  {category:'Wiara', question:'Czy kierujesz się wiarą w decyzjach?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasami', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Wiara', question:'Czy modlisz się w trudnych sytuacjach?', options:[
+    {text:'Nie', points:4},
+    {text:'Czasem', points:5},
+    {text:'Często', points:6},
+    {text:'Zawsze', points:10}
+  ]},
+
+  // --------------------
+  // 4. PIENIĄDZE - 10 pytań
+  {category:'Pieniądze', question:'Ile zarabiasz miesięcznie?', options:[
+    {text:'1000$', points:1},
+    {text:'2000$', points:2},
+    {text:'10 000$', points:4},
+    {text:'100 000$+', points:10}
+  ]},
+  {category:'Pieniądze', question:'Ile oszczędzasz?', options:[
+    {text:'0$', points:1},
+    {text:'100$', points:2},
+    {text:'1000$', points:4},
+    {text:'10 000$+', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy inwestujesz pieniądze?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:2},
+    {text:'Regularnie', points:4},
+    {text:'Zawsze przemyślanie', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy planujesz budżet?', options:[
+    {text:'Nie', points:1},
+    {text:'Rzadko', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy pomagasz finansowo innym?', options:[
+    {text:'Nigdy', points:1},
+    {text:'Czasem', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy masz dodatkowe źródła dochodu?', options:[
+    {text:'Nie', points:1},
+    {text:'1', points:2},
+    {text:'2-3', points:4},
+    {text:'Więcej niż 3', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy jesteś zadowolony z dochodu?', options:[
+    {text:'Nie', points:1},
+    {text:'Częściowo', points:2},
+    {text:'Średnio', points:4},
+    {text:'Bardzo', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy kupujesz luksusowe rzeczy?', options:[
+    {text:'Nigdy', points:1},
+    {text:'Czasem', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy prowadzisz własną firmę?', options:[
+    {text:'Nie', points:1},
+    {text:'Tak, małą', points:2},
+    {text:'Średnią', points:4},
+    {text:'Dużą', points:10}
+  ]},
+  {category:'Pieniądze', question:'Czy inwestujesz w nieruchomości?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:2},
+    {text:'Regularnie', points:4},
+    {text:'Zawsze', points:10}
+  ]},
+
+  // --------------------
+  // 5. POETYCYZM - 10 pytań
+  {category:'Poetycyzm', question:'Jak dobrze piszesz wiersze?', options:[
+    {text:'Fatalnie', points:1},
+    {text:'Przeciętnie', points:2},
+    {text:'Ponadprzeciętnie', points:4},
+    {text:'Perfekcja', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Jak dobrze piszesz powieści?', options:[
+    {text:'Fatalnie', points:1},
+    {text:'Przeciętnie', points:2},
+    {text:'Ponadprzeciętnie', points:4},
+    {text:'Perfekcja', points:5}
+  ]},
+  {category:'Poetycyzm', question:'W ilu % rzeczy literackich się odnajdujesz?', options:[
+    {text:'0-5%', points:1},
+    {text:'5-10%', points:2},
+    {text:'10-50%', points:4},
+    {text:'Idealnie', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy inspirujesz się literaturą?', options:[
+    {text:'Nie', points:1},
+    {text:'Trochę', points:2},
+    {text:'Często', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy piszesz na codzień?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:2},
+    {text:'Często', points:4},
+    {text:'Codziennie', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy poprawiasz swoje teksty?', options:[
+    {text:'Nigdy', points:1},
+    {text:'Czasem', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy publikujesz swoje teksty?', options:[
+    {text:'Nigdy', points:1},
+    {text:'Czasem', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy potrafisz interpretować poezję?', options:[
+    {text:'Nie', points:1},
+    {text:'Trochę', points:2},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy tworzysz własne style?', options:[
+    {text:'Nie', points:1},
+    {text:'Trochę', points:2},
+    {text:'Często', points:4},
+    {text:'Zawsze', points:5}
+  ]},
+  {category:'Poetycyzm', question:'Czy potrafisz analizować literaturę?', options:[
+    {text:'Nie', points:1},
+    {text:'Trochę', points:2},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+
+  // --------------------
+  // 6. JĘZYKOWOŚĆ - 10 pytań
+  {category:'Językowość', question:'Ile znasz języków (B2+)?', options:[
+    {text:'0-1', points:5},
+    {text:'2', points:6},
+    {text:'3-4', points:8},
+    {text:'>4', points:10}
+  ]},
+  {category:'Językowość', question:'Na jakim poziomie znasz angielski?', options:[
+    {text:'A1 lub mniej', points:5},
+    {text:'A2', points:6},
+    {text:'B2', points:8},
+    {text:'C2 lub native', points:10}
+  ]},
+  {category:'Językowość', question:'Czy uczysz się języków regularnie?', options:[
+    {text:'Nie', points:5},
+    {text:'Czasem', points:6},
+    {text:'Regularnie', points:8},
+    {text:'Codziennie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy rozumiesz teksty literackie?', options:[
+    {text:'Nie', points:5},
+    {text:'Trochę', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy potrafisz tłumaczyć teksty?', options:[
+    {text:'Nie', points:5},
+    {text:'Trochę', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy potrafisz konwersować w obcym języku?', options:[
+    {text:'Nie', points:5},
+    {text:'Czasem', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy uczysz innych języka?', options:[
+    {text:'Nie', points:5},
+    {text:'Czasem', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy czytasz książki w obcych językach?', options:[
+    {text:'Nie', points:5},
+    {text:'Czasem', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy śledzisz obcojęzyczne media?', options:[
+    {text:'Nie', points:5},
+    {text:'Czasem', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+  {category:'Językowość', question:'Czy znasz idiomy i slang?', options:[
+    {text:'Nie', points:5},
+    {text:'Trochę', points:6},
+    {text:'Dobrze', points:8},
+    {text:'Perfekcyjnie', points:10}
+  ]},
+
+  // --------------------
+  // 7. IQ - 10 pytań
+  {category:'IQ', question:'Jaki jest Twój wynik IQ?', options:[
+    {text:'<100', points:1},
+    {text:'~100', points:3},
+    {text:'>120', points:4},
+    {text:'>150', points:5}
+  ]},
+  {category:'IQ', question:'Czy szybko rozwiązujesz zadania logiczne?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy analizujesz skomplikowane problemy?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy potrafisz abstrakcyjnie myśleć?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy radzisz sobie z łamigłówkami?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy szybko uczysz się nowych umiejętności?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy rozumiesz złożone koncepcje?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy potrafisz myśleć strategicznie?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy analizujesz ryzyko przed decyzją?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+  {category:'IQ', question:'Czy rozwiązujesz problemy matematyczne łatwo?', options:[
+    {text:'Nie', points:1},
+    {text:'Czasem', points:3},
+    {text:'Dobrze', points:4},
+    {text:'Perfekcyjnie', points:5}
+  ]},
+];
+
+let currentQuestion = 0;
+let results = {};
+let counts = {};
+
+function showQuestion(){
+  const q = quizData[currentQuestion];
+  document.getElementById('question-text').textContent = q.question;
+  const optionsContainer = document.getElementById('options-container');
+  optionsContainer.innerHTML = '';
+  q.options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.textContent = opt.text;
+    btn.onclick = ()=>selectOption(opt.points, q.category);
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function selectOption(points, category){
+  if(!results[category]) results[category]=0;
+  if(!counts[category]) counts[category]=0;
+  results[category]+=points;
+  counts[category]+=1;
+  currentQuestion++;
+  if(currentQuestion<quizData.length){
+    showQuestion();
+  }else{
+    showResults();
+  }
+}
+
+function showResults(){
+  document.getElementById('quiz-container').style.display='none';
+  document.getElementById('results').style.display='block';
+
+  const avgResults = {};
+  let sum = 0, n = 0;
+  for(let cat in results){
+    avgResults[cat] = results[cat]/counts[cat];
+    sum += avgResults[cat];
+    n++;
+  }
+  const overall = sum/n;
+
+  const ctx = document.getElementById('resultsChart').getContext('2d');
+  new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels: Object.keys(avgResults),
+      datasets:[{
+        label:'Średni wynik w kategorii',
+        data: Object.values(avgResults),
+        backgroundColor:'rgba(54, 162, 235, 0.6)',
+        borderColor:'rgba(54, 162, 235, 1)',
+        borderWidth:1
+      }]
+    },
+    options:{ scales:{ y:{beginAtZero:true,max:10} } }
+  });
+
+  // Overall opis
+  let overallDesc='';
+  if(overall<=3.0) overallDesc='Człowiek';
+  else if(overall<=5.0) overallDesc='Przeciętny wynik';
+  else if(overall<=6.0) overallDesc='Ponad przeciętny wynik';
+  else if(overall<=7.5) overallDesc='Dobry wynik';
+  else if(overall<=8.5) overallDesc='Wysokie kwalifikacje';
+  else if(overall<=9.9) overallDesc='Nad-człowiek';
+  else overallDesc='Perfekcjonista!';
+
+  document.getElementById('overallDesc').textContent = `Twój wynik overall: ${overall.toFixed(2)} → ${overallDesc}`;
+}
+
+// start quiz
+showQuestion();
+</script>
+</body>
+</html>
+
+
+
+
+
